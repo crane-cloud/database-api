@@ -1,0 +1,16 @@
+version: "3"
+services:
+  database-api:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: database-api
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+    
