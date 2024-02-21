@@ -5,13 +5,14 @@ from typing import List, Annotated
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import create_database, database_exists
 from app.models import Base, Database
+import os
+import settings
 
-DATABASE_URL = 'postgresql://neelxie:password@localhost:5433/ccdatabase'
+service_database = os.getenv('DATABASE_URL')
+if not database_exists(service_database):
+  create_database(service_database)
 
-if not database_exists(DATABASE_URL):
-  create_database(DATABASE_URL)
-
-engine =  create_engine(DATABASE_URL, pool_pre_ping=True)
+engine =  create_engine(service_database, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
