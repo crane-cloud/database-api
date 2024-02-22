@@ -1,10 +1,7 @@
 from sqlalchemy import create_engine
-from fastapi import Depends, HTTPException
-from sqlalchemy.orm import sessionmaker, Session
-from typing import List, Annotated
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists
-from app.models import Base, Database
+from app.models import Base
 import os
 import settings
 
