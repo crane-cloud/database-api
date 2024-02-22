@@ -1,12 +1,14 @@
 from sqlalchemy import create_engine
+import os
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import sessionmaker, Session
 from typing import List, Annotated
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import create_database, database_exists
 from app.models import Base, Database
+import settings
 
-DATABASE_URL = 'postgresql://neelxie:password@localhost:5433/ccdatabase'
+DATABASE_URL = os.getenv('DATABASE_URI')
 
 if not database_exists(DATABASE_URL):
   create_database(DATABASE_URL)
