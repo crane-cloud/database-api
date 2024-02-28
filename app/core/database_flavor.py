@@ -1,6 +1,7 @@
 import os
 from types import SimpleNamespace
 from app.core.database_service import MysqlDbService, PostgresqlDbService
+import settings
 
 db_flavors = {
     'postgres': {
