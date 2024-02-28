@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   database-api:
     restart: always
@@ -9,8 +9,27 @@ services:
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
+      DATABASE_USER: postgres
+      DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database:5432/cranecloud}
+      TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database:5432/cranecloud_test}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
       - .:/app
-    
+    depends_on:
+      - database
+
+  database:
+    restart: always
+    image: postgres:10.8-alpine
+    container_name: postgres-database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cranecloud
+    ports:
+      - "4200:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
