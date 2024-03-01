@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schema import (DatabaseSchema, DatabaseFlavor)
+from app.schema import (DatabaseSchema, DatabaseFlavor, PasswordUpdate)
 import os
 import json
 from app.core.config import get_db
@@ -81,10 +81,10 @@ async def create_database(database: DatabaseFlavor, db: Session = Depends(get_db
       data=database
   ), 201
 
-@router.get("/admin/postgresql_databases/")
-def get_all_postgresql_databases(db: Session = Depends(get_db)):
-    postgresql_databases = db.query(Database).filter(Database.database_flavour_name == "postgres").all()
-    return postgresql_databases
+# @router.get("/admin/postgresql_databases/")
+# def get_all_postgresql_databases(db: Session = Depends(get_db)):
+#     postgresql_databases = db.query(Database).filter(Database.database_flavour_name == "postgres").all()
+#     return postgresql_databases
 
 @router.get("/user/databases")
 def get_user_databases(user_id:str, db: Session = Depends(get_db)):
@@ -114,8 +114,15 @@ def get_one_databases(database_id:str, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Databases not found")
   return user_databases
 
+@router.get("/user/databases/{database_id}/password")
+def get_database_password(database_id:str, db: Session = Depends(get_db)):
+  db_exists = db.query(Database).filter(Database.id == database_id).first()
+  if not db_exists:
+    raise HTTPException(status_code=404, detail="Database not found")
+  return db_exists.password
+
 @router.delete("/user/databases/{database_id}")
-def admin_delete_user_database(database_id:str, db: Session = Depends(get_db)):
+def delete_user_database(database_id:str, db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     raise HTTPException(status_code=404, detail="Databases not found")
@@ -123,7 +130,40 @@ def admin_delete_user_database(database_id:str, db: Session = Depends(get_db)):
   db.commit()
   return {"message": "Database deleted successfully"}
 
-@router.post("/user/databases/reset/{database_id}")
+@router.post("/user/databases/{database_id}/enable")
+def enable_user_database(database_id:str, db: Session = Depends(get_db)):
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if database is None:
+    raise HTTPException(status_code=404, detail="Databases not found")
+  
+  if (database.disabled == False):
+    raise HTTPException(status_code=404, detail="Databases is already enabled.")
+  
+  if database.admin_disabled:
+    return {'You are not authorised to enable Database with id {database_id}, please contact an admin'}, 403
+  
+  database.disabled = False
+  db.commit()
+  return {"message": "Database enabled successfully"}
+
+
+@router.post("/user/databases/{database_id}/disable")
+def disable_user_database(database_id:str, db: Session = Depends(get_db)):
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if database is None:
+    raise HTTPException(status_code=404, detail="Databases not found")
+  
+  if database.disabled:
+    raise HTTPException(status_code=404, detail="Databases is already disabled.")
+  
+  if database.admin_disabled:
+    return {'Database with id {database_id} is disabled, please contact an admin'}, 403
+  
+  database.disabled = True
+  db.commit()
+  return {"message": "Database disabled successfully"}
+
+@router.post("/user/databases/{database_id}/reset/")
 def reset_database(database_id:str, db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
@@ -161,6 +201,49 @@ def reset_database(database_id:str, db: Session = Depends(get_db)):
     ), 500
 
   return ({"status":'success', "message":"Database Reset Successfully"}), 200
+
+@router.post("/user/databases/{database_id}/reset_password")
+def password_reset_database(database_id:str, field_update:PasswordUpdate, db: Session = Depends(get_db)):
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if not database:
+    raise HTTPException(status_code=404, detail="Databases not found")
+
+  db_flavour = get_db_flavour(database.database_flavour_name)
+
+  if not db_flavour:
+    return dict(
+        status="fail",
+        message=f"Database with flavour name {database.database_flavour_name} is not mysql or postgres."
+    ), 409
+
+  database_service = db_flavour['class']
+
+  database_connection = database_service.check_db_connection()
+
+  if not database_connection:
+
+    return dict(
+        status="fail",
+        message=f"Failed to connect to the database service"
+    ), 500
+
+  password_reset_database = database_service.reset_password(
+    
+    user=database.user,
+    password= field_update.password
+  )
+
+  if not password_reset_database:
+    return dict(
+        status="fail",
+        message=f"Unable to reset database password"
+    ), 500
+  
+  database.password = field_update.password
+
+  db.commit()
+
+  return ({"status":'success', "message":"Database Password Reset Successfully"}), 200
 
 @router.post("/user/databases")
 async def create_database(database: DatabaseFlavor, db: Session = Depends(get_db)):
