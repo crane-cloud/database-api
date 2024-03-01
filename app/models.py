@@ -25,3 +25,5 @@ class Database(Base):
     deleted = Column(Boolean, default=False)
     disabled = Column(Boolean, default=False)
     admin_disabled = Column(Boolean, default=False)
+    default_storage = Column(Integer, nullable=True)
+    allocated_size = Column(Integer, nullable=True)

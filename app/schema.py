@@ -20,3 +20,7 @@ class DatabaseSchema(BaseModel):
 class DatabaseFlavor(BaseModel):
     
     database_flavour_name: Optional[str]
+
+class PasswordUpdate(BaseModel):
+    
+    password: str
