@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import text as sa_text
 import bcrypt
@@ -25,5 +25,5 @@ class Database(Base):
     deleted = Column(Boolean, default=False)
     disabled = Column(Boolean, default=False)
     admin_disabled = Column(Boolean, default=False)
-    default_storage = Column(Integer, nullable=True)
-    allocated_size = Column(Integer, nullable=True)
+    default_storage_kb = Column(BigInteger, nullable=True,)
+    allocated_size_kb = Column(BigInteger, nullable=True, default=1048576)
