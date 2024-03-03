@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app.schema import (DatabaseSchema)
 from app.models import Database
@@ -6,40 +6,51 @@ from app.core.config import get_db
 from typing import List
 from app.core.database_service import generate_db_credentials
 from app.core.database_flavor import get_db_flavour
+from typing import Annotated
+
+from app.helpers.decorators import admin_required , authenticate
+from app.helpers.admin import get_current_user
 
 router = APIRouter()
 
 @router.get("/admin/databases/")
-def get_all_databases(db: Session = Depends(get_db)):
+@admin_required
+def get_all_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     databases = db.query(Database).all()
     return databases
 
 @router.get("/admin/mysql_databases/")
-def get_all_mysql_databases(db: Session = Depends(get_db)):
+@admin_required
+def get_all_mysql_databases(access_token:Annotated[str | None, Header()] = None  , db: Session = Depends(get_db)):
     mysql_databases = db.query(Database).filter(Database.database_flavour_name == "mysql").all()
     return mysql_databases
 
 @router.get("/admin/postgresql_databases/")
-def get_all_postgresql_databases(db: Session = Depends(get_db)):
+@admin_required
+def get_all_postgresql_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     postgresql_databases = db.query(Database).filter(Database.database_flavour_name == "postgres").all()
     return postgresql_databases
 
-@router.get("/admin/user_databases/{user_id}")
-def get_user_databases(user_id:str, db: Session = Depends(get_db)):
-  user_databases = db.query(Database).filter(Database.owner_id == user_id).first()
+@router.get("/admin/user_databases/")
+@admin_required
+def get_user_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
+  current_user = get_current_user(access_token)
+  user_databases = db.query(Database).filter(Database.owner_id == current_user['id']).first()
   if not user_databases:
     raise HTTPException(status_code=404, detail="No databases found for this user")
   return user_databases
 
 @router.get("/admin/databases/{database_id}")
-def get_single_databases(database_id:str, db: Session = Depends(get_db)):
+@admin_required
+def get_single_databases(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   user_databases = db.query(Database).filter(Database.id == database_id).first()
   if not user_databases:
     raise HTTPException(status_code=404, detail="Databases not found")
   return user_databases
 
 @router.delete("/admin/databases/{database_id}")
-def delete_user_database(database_id:str, db: Session = Depends(get_db)):
+@admin_required
+def delete_user_database(database_id:str,access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     raise HTTPException(status_code=404, detail="Databases not found")
@@ -48,7 +59,8 @@ def delete_user_database(database_id:str, db: Session = Depends(get_db)):
   return {"message": "Database deleted successfully"}
 
 @router.post("/admin/databases/reset/{database_id}")
-def reset_user_database(database_id:str, db: Session = Depends(get_db)):
+@admin_required
+def reset_user_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     raise HTTPException(status_code=404, detail="Databases not found")
