@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.post("/databases")
 @authenticate
-async def create_database(database: DatabaseFlavor, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
+def create_database(database: DatabaseFlavor, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
 
   credentials = generate_db_credentials()
   db_flavor = get_db_flavour(database.database_flavour_name)
@@ -30,6 +30,8 @@ async def create_database(database: DatabaseFlavor, access_token:Annotated[str |
       message=f"Database flavour with name {database.database_flavour_name} is not mysql or postgres."
     ), 409
   
+
+  
   existing_name = db.query(Database).filter(Database.name == credentials.name).first()
   if existing_name:
     raise HTTPException(status_code=400, detail="Database with this name already exists")
@@ -37,6 +39,7 @@ async def create_database(database: DatabaseFlavor, access_token:Annotated[str |
   existing_user = db.query(Database).filter(Database.user == credentials.user).first()
   if existing_user:
     raise HTTPException(status_code=400, detail="Database with this user already exists")
+
   
   new_database_info = dict(
       user=credentials.user,
