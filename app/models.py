@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import text as sa_text
 import bcrypt
@@ -25,11 +25,5 @@ class Database(Base):
     deleted = Column(Boolean, default=False)
     disabled = Column(Boolean, default=False)
     admin_disabled = Column(Boolean, default=False)
-    # TODO: make database_flavour_name nullable=false
-    # TODO: Implement the soft delete
-
-    # def password_is_valid(self, password):
-    #     """ checks the password against it's hash to validate the user's password """
-    #     return bcrypt.checkpw(password, self.password)
-    
-# Base.metadata.create_all(engine)
+    default_storage_kb = Column(BigInteger, nullable=True,)
+    allocated_size_kb = Column(BigInteger, nullable=True, default=1048576)
