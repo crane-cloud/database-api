@@ -6,7 +6,6 @@ import os
 import secrets
 import string
 from types import SimpleNamespace
-import settings
 
 def generate_db_credentials():
     punctuation = r"""#%+,-<=>^_"""

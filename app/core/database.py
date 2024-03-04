@@ -3,7 +3,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists
 from app.models import Base
 import os
-import settings
 
 
 DATABASE_URL = os.getenv('DATABASE_URI')
