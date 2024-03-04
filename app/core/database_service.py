@@ -2,10 +2,10 @@
 import mysql.connector as mysql_conn
 import psycopg2
 from psycopg2 import sql
-import os
 import secrets
 import string
 from types import SimpleNamespace
+from config import settings
 
 def generate_db_credentials():
     punctuation = r"""#%+,-<=>^_"""
@@ -90,10 +90,10 @@ class MysqlDbService(DatabaseService):
     def create_connection(self):
         try:
             super_connection = mysql_conn.connect(
-                host=os.getenv('ADMIN_MYSQL_HOST'),
-                user=os.getenv('ADMIN_MYSQL_USER'),
-                password=os.getenv('ADMIN_MYSQL_PASSWORD'),
-                port=os.getenv('ADMIN_MYSQL_PORT', '')
+                host=settings.ADMIN_MYSQL_HOST,
+                user=settings.ADMIN_MYSQL_USER,
+                password=settings.ADMIN_MYSQL_PASSWORD,
+                port=settings.ADMIN_MYSQL_PORT
             )
             return super_connection
         except self.Error as e:
@@ -103,10 +103,10 @@ class MysqlDbService(DatabaseService):
     def create_db_connection(self, user=None, password=None, db_name=None):
         try:
             user_connection = mysql_conn.connect(
-                host=os.getenv('ADMIN_MYSQL_HOST'),
+                host=settings.ADMIN_MYSQL_HOST,
                 user=user,
                 password=password,
-                port=os.getenv('ADMIN_MYSQL_PORT', ''),
+                port=settings.ADMIN_MYSQL_PORT,
                 database=db_name
             )
             return user_connection
@@ -410,10 +410,10 @@ class PostgresqlDbService(DatabaseService):
     def create_connection(self):
         try:
             super_connection = psycopg2.connect(
-                host=os.getenv('ADMIN_PSQL_HOST'),
-                user=os.getenv('ADMIN_PSQL_USER'),
-                password=os.getenv('ADMIN_PSQL_PASSWORD'),
-                port=os.getenv('ADMIN_PSQL_PORT', '')
+                host=settings.ADMIN_PSQL_HOST,
+                user=settings.ADMIN_PSQL_USER,
+                password=settings.ADMIN_PSQL_PASSWORD,
+                port=settings.ADMIN_PSQL_PORT
             )
             super_connection.autocommit = True
             return super_connection
@@ -437,10 +437,10 @@ class PostgresqlDbService(DatabaseService):
     def create_db_connection(self, user=None, password=None, db_name=None):
         try:
             user_connection = psycopg2.connect(
-                host=os.getenv('ADMIN_PSQL_HOST'),
+                host=settings.ADMIN_PSQL_HOST,
                 user=user,
                 password=password,
-                port=os.getenv('ADMIN_PSQL_PORT', ''),
+                port=settings.ADMIN_PSQL_PORT,
                 database=db_name
             )
             return user_connection
