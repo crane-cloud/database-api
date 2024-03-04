@@ -12,15 +12,6 @@ def authenticate(fn):
         if (not payload['fresh']):
             raise HTTPException(status_code=409, detail="The authentication session is currently expired.")
 
-        
-        if (payload['user_claims']['disabled']):
-            raise HTTPException(status_code=409, detail="This user was disabled.")
-
-        
-        if (payload['user_claims']['admin_disabled']):
-            raise HTTPException(status_code=409, detail="This user was admin disabled.")
-
-
         return fn(*args, **kwargs)
     return wrapper
 

@@ -157,7 +157,7 @@ def admin_disable_user_database(database_id:str, access_token:Annotated[str | No
   return {"message": "Database disabled successfully"}
 
 @router.delete("/databases/{database_id}")
-@admin_required
+@authenticate
 def delete_user_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
@@ -167,7 +167,7 @@ def delete_user_database(database_id:str, access_token:Annotated[str | None, Hea
   return {"message": "Database deleted successfully"}
 
 @router.post("/databases/{database_id}/reset")
-@admin_required
+@authenticate
 def reset_user_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
@@ -206,7 +206,7 @@ def reset_user_database(database_id:str, access_token:Annotated[str | None, Head
   return ({"status":'success', "message":"Database Reset Successfully"}), 200
 
 @router.post("/databases/{database_id}/reset_password")
-@admin_required
+@authenticate
 def password_reset_database(database_id:str, field_update:PasswordUpdate, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   database = db.query(Database).filter(Database.id == database_id).first()
   if not database:
@@ -250,7 +250,7 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
   return ({"status":'success', "message":"Database Password Reset Successfully"}), 200
 
 @router.get("/check_database_storage/{database_id}")
-@admin_required
+@authenticate
 def check_database_storage(database_id: str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
@@ -263,7 +263,7 @@ def check_database_storage(database_id: str, access_token:Annotated[str | None, 
     return {"message": "Database storage is within allocated limits"}
 
 @router.get("/check_database_storage_limit/{database_id}")
-@admin_required
+@authenticate
 def check_database_storage_limit(database_id: str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
@@ -293,7 +293,7 @@ def check_database_storage_limit(database_id: str, access_token:Annotated[str | 
     return {f"Database limit is {database.allocated_size_kb} kbs."}
 
 @router.post("/update_database_storage/{database_id}")
-@admin_required
+@authenticate
 def update_database_storage(database_id: str, new_storage: int, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
@@ -336,6 +336,7 @@ def get_user_databases(access_token:Annotated[str | None, Header()] = None , db:
   return user_databases
 
 @router.get("/databases/mysql")
+@authenticate
 def get_user_mysql_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   
   current_user = get_current_user(access_token)
@@ -346,6 +347,7 @@ def get_user_mysql_databases(access_token:Annotated[str | None, Header()] = None
   return user_databases
 
 @router.get("/databases/postgres")
+@authenticate
 def get_user_postgres_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
   
   current_user = get_current_user(access_token)
