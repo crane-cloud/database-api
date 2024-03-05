@@ -2,12 +2,8 @@ import datetime
 import uuid
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import text as sa_text
-import bcrypt
-from sqlalchemy.ext.declarative import declarative_base
+from app.core.database import Base
 
-
-Base = declarative_base()
 
 class Database(Base):
     __tablename__ = 'user_databases'
