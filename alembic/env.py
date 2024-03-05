@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from config import settings
 from main import create_app
-from app.core.database import Base
+from app.database import Base
 
 fastapi_app = create_app()
 # this is the Alembic Config object, which provides
