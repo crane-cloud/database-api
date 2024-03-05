@@ -2,15 +2,28 @@ from jose import JWTError, jwt
 from functools import wraps
 from app.helpers.admin import has_role
 from fastapi import APIRouter, Depends, HTTPException
+from jose.exceptions import JWKError , JWTError
 import os
 
 def authenticate(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        payload = jwt.decode(kwargs['access_token'] , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+
+        payload : object = {}
+
+        try :
+            payload = jwt.decode(kwargs['access_token'] , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Access token is not valid")
         
+        except JWKError:
+            raise HTTPException(status_code=401, detail="There is an error with the JWT verification salt.")
+
+
         if (not payload['fresh']):
             raise HTTPException(status_code=409, detail="The authentication session is currently expired.")
+
 
         return fn(*args, **kwargs)
     return wrapper
