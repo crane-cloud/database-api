@@ -19,6 +19,7 @@ passlib = "^1.7.4"
 sqlalchemy-utils = "^0.41.1"
 mysql-connector-python = "^8.3.0"
 python-dotenv = "^1.0.1"
+alembic = "^1.13.1"
 
 
 [build-system]

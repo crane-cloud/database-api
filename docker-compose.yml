@@ -10,22 +10,22 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
       DATABASE_USER: postgres
-      DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database:5432/cranecloud}
-      TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database:5432/cranecloud_test}
+      DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
+      TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db_test}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
       - .:/app
     depends_on:
-      - database
+      - database_db
 
-  database:
+  database_db:
     restart: always
     image: postgres:10.8-alpine
     container_name: postgres-database
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_DB: cranecloud
+      POSTGRES_DB: cranecloud_db
     ports:
       - "4200:5432"
     volumes:

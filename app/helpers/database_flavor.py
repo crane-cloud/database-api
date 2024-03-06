@@ -1,7 +1,7 @@
 import os
 from types import SimpleNamespace
-from app.core.database_service import MysqlDbService, PostgresqlDbService
-import settings
+from app.helpers.database_service import MysqlDbService, PostgresqlDbService
+from config import settings
 
 db_flavors = {
     'postgres': {
@@ -25,14 +25,14 @@ db_flavors = {
 database_flavours = [
     {
         'name': 'mysql',
-        'host': os.getenv('ADMIN_MYSQL_HOST'),
-        'port': os.getenv('ADMIN_MYSQL_PORT'),
+        'host': settings.ADMIN_MYSQL_HOST,
+        'port': settings.ADMIN_MYSQL_PORT,
         'class': MysqlDbService()
     },
     {
         'name': 'postgres',
-        'host': os.getenv('ADMIN_PSQL_HOST'),
-        'port': os.getenv('ADMIN_PSQL_PORT'),
+        'host': settings.ADMIN_PSQL_HOST,
+        'port': settings.ADMIN_PSQL_PORT,
         'class': PostgresqlDbService()
     }
 ]

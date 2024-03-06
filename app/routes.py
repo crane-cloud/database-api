@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from app.schema import (DatabaseSchema, DatabaseFlavor, PasswordUpdate)
 from app.models import Database
 from sqlalchemy.orm import Session
-from app.core.config import get_db
+from app.helpers.database_session import get_db
 from typing import List
 import os
 import json
-from app.core.database_service import generate_db_credentials
-from app.core.database_flavor import get_db_flavour
+from app.helpers.database_service import generate_db_credentials
+from app.helpers.database_flavor import get_db_flavour
 
 from typing import Annotated
 #from fastapi import FastAPI, Header
