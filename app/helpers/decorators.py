@@ -11,6 +11,9 @@ def authenticate(fn):
 
         payload : object = {}
 
+        if kwargs['access_token'] is None :
+            raise HTTPException(status_code=401 , detail="Access token was not supplied")
+
         try :
             payload = jwt.decode(kwargs['access_token'] , os.getenv("JWT_SALT") , algorithms= ['HS256'])
 

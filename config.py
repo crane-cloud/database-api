@@ -14,8 +14,11 @@ class BaseConfig:
 
 
 class DevelopmentConfig(BaseConfig):
-    pass
+    ADMIN_PSQL_USER : str = os.getenv("ADMIN_PSQL_USER")
+    ADMIN_PSQL_PASSWORD : str = os.getenv("ADMIN_PSQL_PASSWORD")
 
+    ADMIN_MYSQL_USER : str = os.getenv("ADMIN_MYSQL_USER")
+    ADMIN_MYSQL_PASSWORD : str = os.getenv("ADMIN_MYSQL_PASSWORD")
 
 class ProductionConfig(BaseConfig):
     pass
