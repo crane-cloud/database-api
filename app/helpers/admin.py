@@ -10,5 +10,6 @@ def has_role(role_list, role_name) -> bool:
 
 
 def get_current_user(access_token) -> object:
-    payload = jwt.decode(access_token , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+    token = access_token.split(' ')[1]
+    payload = jwt.decode(token , os.getenv("JWT_SALT") , algorithms= ['HS256'])
     return payload['user_claims']['roles'][0]
