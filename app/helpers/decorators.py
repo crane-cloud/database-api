@@ -15,7 +15,9 @@ def authenticate(fn):
             raise HTTPException(status_code=401 , detail="Access token was not supplied")
 
         try :
-            payload = jwt.decode(kwargs['access_token'] , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+
+            token = kwargs['access_token'].split(' ')[1]
+            payload = jwt.decode(token, os.getenv("JWT_SALT") , algorithms= ['HS256'])
 
         except JWTError:
             raise HTTPException(status_code=401, detail="Access token is not valid")
@@ -23,6 +25,8 @@ def authenticate(fn):
         except JWKError:
             raise HTTPException(status_code=401, detail="There is an error with the JWT verification salt.")
 
+        except IndexError:
+            raise HTTPException(status_code=401, detail="The access token supplied is not a bearer token")
 
         return fn(*args, **kwargs)
     return wrapper
@@ -32,7 +36,8 @@ def admin_required(fn):
     @wraps(fn)
     @authenticate
     def wrapper(*args, **kwargs):
-        payload = jwt.decode(kwargs['access_token'] , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+        token = kwargs['access_token'].split(' ')[1]
+        payload = jwt.decode(token , os.getenv("JWT_SALT") , algorithms= ['HS256'])
         if (has_role(payload['user_claims']['roles'] , "administrator")):
             return fn(*args, **kwargs)
         else :
