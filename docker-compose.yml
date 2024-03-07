@@ -20,6 +20,15 @@ services:
       ADMIN_PSQL_PORT: ${ADMIN_PSQL_PORT}
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
       TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db_test}
+      ADMIN_MYSQL_HOST: ${ADMIN_MYSQL_HOST}
+      ADMIN_MYSQL_USER: ${ADMIN_MYSQL_USER}
+      ADMIN_MYSQL_PASSWORD: ${ADMIN_MYSQL_PASSWORD}
+      ADMIN_MYSQL_PORT: ${ADMIN_MYSQL_PORT}
+      ADMIN_PSQL_HOST: ${ADMIN_PSQL_HOST}
+      ADMIN_PSQL_USER: ${ADMIN_PSQL_USER}
+      ADMIN_PSQL_PASSWORD: ${ADMIN_PSQL_PASSWORD}
+      ADMIN_PSQL_PORT: ${ADMIN_PSQL_PORT}
+      JWT_SALT: ${JWT_SALT}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
