@@ -422,6 +422,7 @@ class PostgresqlDbService(DatabaseService):
             return False
 
     def check_db_connection(self):
+        super_connection = None
         try:
             super_connection = self.create_connection()
             if not super_connection:
