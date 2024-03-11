@@ -7,7 +7,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 DATABASE_URI = settings.DATABASE_URI
 
-
 if not database_exists(DATABASE_URI):
     create_database(DATABASE_URI)
 
