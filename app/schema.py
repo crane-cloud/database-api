@@ -1,9 +1,7 @@
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator, UUID4, constr
 from typing import List, Optional
-from pydantic import BaseModel, UUID4, constr
-from typing import Optional
-from datetime import datetime
+
 
 class DatabaseSchema(BaseModel):
     host: str
@@ -24,3 +22,14 @@ class DatabaseFlavor(BaseModel):
 class PasswordUpdate(BaseModel):
     
     password: str
+
+class UserGraphSchema(BaseModel):
+    start: date
+    end: date
+    set_by: str
+
+    @validator('set_by')
+    def validate_set_by(cls, value):
+        if value not in ['year', 'month']:
+            raise ValueError('set_by should be year or month')
+        return value

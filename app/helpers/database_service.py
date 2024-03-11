@@ -196,12 +196,12 @@ class MysqlDbService(DatabaseService):
             cursor = connection.cursor()
             cursor.execute(
                 f"""SELECT table_schema "{db_name}",
-                SUM(data_length + index_length) / 1024 / 1024 AS "Size(MB)"
+                SUM(data_length + index_length) / 1024 AS "Size(KB)"
                 FROM information_schema.TABLES
                 GROUP BY table_schema""")
             db_size = '0'
             for db in cursor:
-                db_size = f'{float(db[1])} MB'
+                db_size = f'{float(db[1])} KB'
             return db_size
         except self.Error:
             return 'N/A'
@@ -678,6 +678,30 @@ class PostgresqlDbService(DatabaseService):
 
             cursor.close()
             connection.close()
+    
+    def disable_user_access(self, db_user_name):
+        try:
+            connection = self.create_connection()
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            
+            # Revoke write and update privileges
+            cursor.execute(f"REVOKE UPDATE, INSERT ON DATABASE FROM {db_user_name}")
+            
+            # Grant read and delete privileges
+            cursor.execute(f"GRANT SELECT, DELETE ON DATABASE TO {db_user_name}")
+
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
+
 
     # disable user database log in
     def disable_user_log_in(self, db_user_name):
