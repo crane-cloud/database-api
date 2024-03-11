@@ -18,7 +18,7 @@ def authenticate(fn):
 
             token = kwargs['access_token'].split(' ')[1]
             if (kwargs['access_token'].split(' ')[0] != "Bearer"):
-                raise HTTPException(status_code=401, detail="The access token supplied is not a bearer token")
+                raise HTTPException(status_code=422, detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
             
             payload = jwt.decode(token, os.getenv("JWT_SALT") , algorithms= ['HS256'])
 
