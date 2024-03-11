@@ -22,7 +22,7 @@ services:
       TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db_test}
       JWT_SALT: ${JWT_SALT}
     ports:
-      - "${APP_PORT:-8080}:8000"
+      - "${APP_PORT:-8000}:8000"
     volumes:
       - .:/app
     depends_on:
