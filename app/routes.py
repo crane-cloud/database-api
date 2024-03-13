@@ -10,7 +10,7 @@ import requests
 import os
 import json
 from app.helpers.database_service import generate_db_credentials
-from app.helpers.database_flavor import get_db_flavour, database_flavours
+from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat
 from app.helpers.logger import send_log_message, log_response, send_async_log_message
 from typing import Annotated
 from datetime import datetime
@@ -19,11 +19,7 @@ from functools import wraps
 from app.helpers.decorators import admin_or_user_required , authenticate
 from app.helpers.auth import get_current_user
 
-
-
-
 router = APIRouter()
-
 
 @router.get("/databases/stats")
 def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
@@ -648,11 +644,6 @@ def allocate_storage(database_id: str, additional_storage: int, access_token:Ann
     db.commit()
     return {"message": f"Additional {additional_storage} bytes of storage allocated to the database"}
 
-graph_filter_datat = {
-  'start': '2018-01-01',
-  'end': datetime.now().strftime('%Y-%m-%d'),
-  'set_by': 'month'
-}
 
 @router.get("/database/graph")
 def database_graph_data(start: Optional[str] = Query( description="Start date format(YYYY-MM-DD)", default=graph_filter_datat['start']), access_token:Annotated[str | None, Header()] = None , end: Optional[str] = Query( description="End date format(YYYY-MM-DD)", default=graph_filter_datat['end']),set_by: Optional[str] = Query( description="Either month or year", default=graph_filter_datat['set_by']),db_flavour: Optional[str] = Query(None, description="Database flavour either mysql or postgres"), db: Session = Depends(get_db)):

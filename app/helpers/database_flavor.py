@@ -2,6 +2,13 @@ import os
 from types import SimpleNamespace
 from app.helpers.database_service import MysqlDbService, PostgresqlDbService
 from config import settings
+from datetime import datetime
+
+graph_filter_datat = {
+  'start': '2018-01-01',
+  'end': datetime.now().strftime('%Y-%m-%d'),
+  'set_by': 'month'
+}
 
 db_flavors = {
     'postgres': {
