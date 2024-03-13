@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Request, Query
 from app.schema import (DatabaseSchema, DatabaseFlavor, PasswordUpdate)
 from app.models import Database
 from sqlalchemy.orm import Session
+from sqlalchemy import func, column, cast, Date
 from app.helpers.database_session import get_db
 from typing import List, Optional
 from fastapi.responses import JSONResponse
@@ -9,10 +10,10 @@ import requests
 import os
 import json
 from app.helpers.database_service import generate_db_credentials
-from app.helpers.database_flavor import get_db_flavour
+from app.helpers.database_flavor import get_db_flavour, database_flavours
 from app.helpers.logger import send_log_message, log_response, send_async_log_message
 from typing import Annotated
-
+from datetime import datetime
 from functools import wraps
 #from fastapi import FastAPI, Header
 from app.helpers.decorators import admin_or_user_required , authenticate
@@ -23,9 +24,35 @@ from app.helpers.auth import get_current_user
 
 router = APIRouter()
 
+
+@router.get("/databases/stats")
+def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
+    user_role, user_id = get_current_user(access_token)
+    dbs_per_flavour = {}
+    tot_database_count = 0
+    
+    for flavour in database_flavours:
+        databases = db.query(Database).filter_by(database_flavour_name=flavour['name']).all()
+        
+        database_count = len(databases)
+        dbs_per_flavour[f"{flavour['name']}_db_count"] = database_count
+
+        tot_database_count = tot_database_count + database_count
+
+    data = dict(total_database_count=tot_database_count,
+                dbs_stats_per_flavour=dbs_per_flavour)
+    log_data = {
+      "operation": "Stats",
+      "status": "Success",
+      "user_id": user_id,
+      "model":"Database",
+      "description":"Stats successfully fetched."
+    }
+    send_async_log_message(log_data)
+    return dict(status='Success',
+                data=dict(databases=data)), 200
+
 @router.get("/databases")
-# @authenticate
-# @admin_or_user_required
 def get_all_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
     user_role, user_id = get_current_user(access_token)
     if user_role == "administrator":
@@ -620,3 +647,113 @@ def allocate_storage(database_id: str, additional_storage: int, access_token:Ann
     database.allocated_size_kb += additional_storage
     db.commit()
     return {"message": f"Additional {additional_storage} bytes of storage allocated to the database"}
+
+graph_filter_datat = {
+  'start': '2018-01-01',
+  'end': datetime.now().strftime('%Y-%m-%d'),
+  'set_by': 'month'
+}
+
+@router.get("/database/graph")
+def database_graph_data(start: Optional[str] = Query( description="Start date format(YYYY-MM-DD)", default=graph_filter_datat['start']), access_token:Annotated[str | None, Header()] = None , end: Optional[str] = Query( description="End date format(YYYY-MM-DD)", default=graph_filter_datat['end']),set_by: Optional[str] = Query( description="Either month or year", default=graph_filter_datat['set_by']),db_flavour: Optional[str] = Query(None, description="Database flavour either mysql or postgres"), db: Session = Depends(get_db)):
+    """ Shows databases graph data """
+    user_role, user_id = get_current_user(access_token)
+    graph_filter_data = {
+    }
+    try:
+      start_date = datetime.strptime(start, '%Y-%m-%d').date()
+      end_date = datetime.strptime(end, '%Y-%m-%d').date()
+
+      if start is not None:
+          graph_filter_data['start'] = start_date
+          # datetime.strptime(start, '%Y-%m-%d').date()
+      if end is not None:
+          graph_filter_data['end'] = end_date
+          # datetime.strptime(end, '%Y-%m-%d').date()
+      if set_by is not None:
+          if set_by not in ["year", "month"]:
+              raise ValueError('set_by should be year or month')
+          graph_filter_data['set_by'] = set_by
+    except ValueError as e:
+        # print(e)
+        log_data = {
+          "operation": "Graph data",
+          "status": "Failed",
+          "user_id": user_id,
+          "model":"Database",
+          "description":f"Failed due to: {e}"
+        }
+        send_async_log_message(log_data)
+        return JSONResponse(content={'status': 'fail', 'message': str(e)}, status_code=400)
+    
+    valid_flavour = None
+
+    if db_flavour:
+        valid_flavour = get_db_flavour(db_flavour)
+        if not valid_flavour:
+            log_data = {
+              "operation": "Graph Data",
+              "status": "Failed",
+              "user_id": user_id,
+              "model":"Database",
+              "description":"Wrong database flavour name"
+            }
+            send_async_log_message(log_data)
+            return JSONResponse(content={'status': 'fail', 'message': 'Not a valid database flavour use mysql or postgres'}, status_code=401)
+        
+    if set_by == 'month':
+        
+        date_list = func.generate_series(cast(start_date, Date), cast(end_date, Date), '1 month').alias('month')
+        month = column('month')
+        query = db.query(month, func.count(Database.id)).\
+            select_from(date_list).\
+            outerjoin(Database, func.date_trunc('month', Database.date_created) == month)
+
+        if db_flavour:
+            query = query.filter(Database.database_flavour_name == db_flavour)
+
+        db_data = query.group_by(month).order_by(month).all()
+
+    else:
+
+      date_list = func.generate_series(cast(start_date, Date), cast(end_date, Date), '1 year').alias('year')
+      year = column('year')
+      query = db.query(year, func.count(Database.id)).\
+          select_from(date_list).\
+          outerjoin(Database, func.date_trunc('year', Database.date_created) == year)
+
+      if db_flavour:
+          query = query.filter(Database.database_flavour_name == db_flavour)
+
+      db_data = query.group_by(year).order_by(year).all()
+
+    db_info = []
+
+    for item in db_data:
+        item_dict = {
+            'year': item[0].year, 'month': item[0].month, 'value': item[1]
+        }
+        db_info.append(item_dict)
+
+    metadata = dict()
+    query = db.query(Database)
+    
+    metadata['total'] = query.count()
+    metadata['postgres_total'] = query.filter_by(
+        database_flavour_name='postgres').count()
+    metadata['mysql_total'] = query.filter_by(
+        database_flavour_name='mysql').count()
+    db_user = Database.user
+    metadata['users_number'] = query.with_entities(
+        db_user, func.count(db_user)).group_by(db_user).distinct().count()
+    
+    log_data = {
+      "operation": "Graph Data",
+      "status": "Success",
+      "user_id": user_id,
+      "model":"Database",
+      "description":"Graph data successfully fetched."
+    }
+    send_async_log_message(log_data)
+    return {'status': 'success',  'data': {'metadata': metadata, 'graph_data': db_info}}
+    
