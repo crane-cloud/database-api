@@ -30,11 +30,10 @@ def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , d
     user_role, user_id = get_current_user(access_token)
     dbs_per_flavour = {}
     tot_database_count = 0
-    print("kelooo")
+    
     for flavour in database_flavours:
-        databases = db.query(Database).filter(database_flavour_name=flavour['name']).all()
-        print("herere")
-        print(databases)
+        databases = db.query(Database).filter_by(database_flavour_name=flavour['name']).all()
+        
         database_count = len(databases)
         dbs_per_flavour[f"{flavour['name']}_db_count"] = database_count
 
