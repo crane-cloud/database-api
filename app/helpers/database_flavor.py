@@ -3,6 +3,9 @@ from types import SimpleNamespace
 from app.helpers.database_service import MysqlDbService, PostgresqlDbService
 from config import settings
 from datetime import datetime
+from app.models import Database
+from sqlalchemy.orm import Session
+from app.helpers.logger import send_log_message, log_response, send_async_log_message
 
 graph_filter_datat = {
   'start': '2018-01-01',
@@ -56,3 +59,91 @@ def get_db_flavour(flavour_name=None):
 
 def get_all_db_flavours():
     return database_flavours
+
+def disable_database(database: Database, db: Session, is_admin=False):
+    if database.disabled:
+        return SimpleNamespace(
+            message="Database is already disabled",
+            status_code=409
+        )
+
+    # get connection
+    db_flavour = get_db_flavour(database.database_flavour_name)
+    database_service = db_flavour['class']
+    database_connection = database_service.check_db_connection()
+
+    if not database_connection:
+        return SimpleNamespace(
+            message="Failed to connect to the database service",
+            status_code=500
+        )
+
+    if (db_flavour['name'] == 'postgres'):
+
+        disable_database = database_service.disable_user_log_in(
+            database.user)
+        
+    else :
+        disable_database = database_service.disable_user_log_in(
+            database.user , database.password)
+
+    if not disable_database:
+        return SimpleNamespace(
+            message="Unable to disable database",
+            status_code=500
+        )
+    try:
+        database.disabled = True
+        if is_admin:
+            database.admin_disabled = True
+        db.commit()
+        return True
+    except Exception as err:
+        return SimpleNamespace(
+            message=str(err),
+            status_code=500
+        )
+
+
+def enable_database(database: Database, db: Session):
+    if not database.disabled:
+        return SimpleNamespace(
+            message="Database is not disabled",
+            status_code=409
+        )
+
+    # get connection
+    db_flavour = get_db_flavour(database.database_flavour_name)
+    database_service = db_flavour['class']
+    database_connection = database_service.check_db_connection()
+
+    if not database_connection:
+        return SimpleNamespace(
+            message="Failed to connect to the database service",
+            status_code=500
+        )
+
+    # Enable the postgres databases
+
+    if (db_flavour['name'] == 'postgres'):
+        enable_database = database_service.enable_user_log_in(
+            database.user)
+    else :
+        enable_database = database_service.enable_user_log_in(
+            database.user , database.password)
+
+    if not enable_database:
+        return SimpleNamespace(
+            message="Unable to enable database",
+            status_code=500
+        )
+    try:
+        database.disabled = False
+        database.admin_disabled = False
+        db.commit()
+        return True
+    except Exception as err:
+        return SimpleNamespace(
+            message=str(err),
+            status_code=500
+        )

@@ -10,12 +10,12 @@ import requests
 import os
 import json
 from app.helpers.database_service import generate_db_credentials, MysqlDbService, PostgresqlDbService
-from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat
+from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat, disable_database, enable_database
 from app.helpers.logger import send_log_message, log_response, send_async_log_message
 from typing import Annotated
 from datetime import datetime
 from functools import wraps
-#from fastapi import FastAPI, Header
+from types import SimpleNamespace
 from app.helpers.decorators import admin_or_user_required , authenticate
 from app.helpers.auth import get_current_user
 
@@ -378,8 +378,19 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
       send_async_log_message(log_data)
       raise HTTPException(status_code=404, detail="Databases is already enabled.")
     
-    database.admin_disabled = False
-    db.commit()
+    enabled_database = enable_database(database, db)
+    if type(enabled_database) == SimpleNamespace:
+        status_code = enabled_database.status_code if enabled_database.status_code else 500
+        log_data = {
+          "operation": "DATABASE ENABLE",
+          "status": "Failed",
+          "user_id": user_id,
+          "user_email": user_email,
+          "model":"Database",
+          "description":f"Database: {database.id} is {enabled_database.message}."
+        }
+        send_async_log_message(log_data)
+        return dict(status='fail', message=enabled_database.message), status_code
     log_data = {
       "operation": "DATABASE ENABLE",
       "status": "Success",
@@ -415,8 +426,20 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
       send_async_log_message(log_data)
       return {"message": f"You are not authorised to enable Database with id {database_id}, please contact an admin"}
     
-    database.disabled = False
-    db.commit()
+    enabled_database = enable_database(database, db)
+    if type(enabled_database) == SimpleNamespace:
+        status_code = enabled_database.status_code if enabled_database.status_code else 500
+        log_data = {
+          "operation": "DATABASE ENABLE",
+          "status": "Failed",
+          "user_id": user_id,
+          "user_email": user_email,
+          "model":"Database",
+          "description":f"Database: {database.id} is {enabled_database.message}."
+        }
+        send_async_log_message(log_data)
+        return dict(status='fail', message=enabled_database.message), status_code
+
     log_data = {
       "operation": "DATABASE ENABLE",
       "status": "Success",
@@ -445,6 +468,8 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
     send_async_log_message(log_data)
     raise HTTPException(status_code=404, detail="Databases not found")
   if user_role == "administrator":
+    is_admin = user_role == "administrator"
+
     if database.admin_disabled:
       log_data = {
         "operation": "DATABASE DISABLE",
@@ -457,8 +482,19 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
       send_async_log_message(log_data)
       raise HTTPException(status_code=404, detail="Databases is already disabled.")
     
-    database.admin_disabled = True
-    db.commit()
+    disbled_database = disable_database(database, db, is_admin)
+    if type(disbled_database) == SimpleNamespace:
+        status_code = disbled_database.status_code if disbled_database.status_code else 500
+        log_data = {
+          "operation": "DATABASE ENABLE",
+          "status": "Failed",
+          "user_id": user_id,
+          "user_email": user_email,
+          "model":"Database",
+          "description":f"Database: {database.id} is {disbled_database.message}."
+        }
+        send_async_log_message(log_data)
+        return dict(status='fail', message=disbled_database.message), status_code
     log_data = {
       "operation": "DATABASE DISABLE",
       "status": "Success",
@@ -494,8 +530,19 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
       send_async_log_message(log_data)
       return {'Database with id {database_id} is disabled, please contact an admin'}, 403
     
-    database.disabled = True
-    db.commit()
+    disbled_database = disable_database(database, db, is_admin)
+    if type(disbled_database) == SimpleNamespace:
+        status_code = disbled_database.status_code if disbled_database.status_code else 500
+        log_data = {
+          "operation": "DATABASE ENABLE",
+          "status": "Failed",
+          "user_id": user_id,
+          "user_email": user_email,
+          "model":"Database",
+          "description":f"Database: {database.id} is {disbled_database.message}."
+        }
+        send_async_log_message(log_data)
+        return dict(status='fail', message=disbled_database.message), status_code
     log_data = {
       "operation": "DATABASE DISABLE",
       "status": "Success",
