@@ -361,6 +361,43 @@ class MysqlDbService(DatabaseService):
                 cursor.close()
                 connection.close()
 
+    def disable_user_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection()
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            
+            cursor.execute(f"REVOKE ALL PRIVILEGES ON {db_name}.* FROM {db_user_name}")
+            
+            cursor.execute(f"GRANT SELECT, DELETE ON {db_name}.* TO {db_user_name}")
+
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
+
+    def enable_user_write_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection(db_name=db_name)
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            cursor.execute(f"GRANT ALL PRIVILEGES ON {db_name}.* TO {db_user_name}")
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
 
     # disable user database log in
     def disable_user_log_in(self, db_user_name, db_user_pw):
@@ -678,20 +715,36 @@ class PostgresqlDbService(DatabaseService):
 
             cursor.close()
             connection.close()
-    
-    def disable_user_access(self, db_user_name):
+            
+    def disable_user_access(self, db_name, db_user_name):
+        """Grants read and delete access to the specified user, revoking write and update privileges."""
         try:
             connection = self.create_connection()
             if not connection:
                 return False
             cursor = connection.cursor()
+            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {db_name} FROM {db_user_name}")
+            cursor.execute(f"REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM {db_user_name}")
+            cursor.execute(f"REVOKE USAGE ON SCHEMA public FROM {db_user_name}")
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
             
-            # Revoke write and update privileges
-            cursor.execute(f"REVOKE UPDATE, INSERT ON DATABASE FROM {db_user_name}")
-            
-            # Grant read and delete privileges
-            cursor.execute(f"GRANT SELECT, DELETE ON DATABASE TO {db_user_name}")
-
+    def enable_user_write_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection(db_name=db_name)
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {db_name} TO {db_user_name}")
+            cursor.execute(f"GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {db_user_name}")
+            cursor.execute(f"GRANT USAGE ON SCHEMA public TO {db_user_name}")
             return True
         except self.Error as e:
             print(e)

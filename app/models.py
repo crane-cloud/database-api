@@ -21,5 +21,6 @@ class Database(Base):
     deleted = Column(Boolean, default=False)
     disabled = Column(Boolean, default=False)
     admin_disabled = Column(Boolean, default=False)
+    email = Column(String, nullable=True,)
     default_storage_kb = Column(BigInteger, nullable=True,)
     allocated_size_kb = Column(BigInteger, nullable=True, default=1048576)
