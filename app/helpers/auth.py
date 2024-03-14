@@ -8,11 +8,12 @@ def has_role(role_list, role_name) -> bool:
             return True
     return False
 
-def get_current_user(access_token) -> tuple[str, str]:
+def get_current_user(access_token) -> tuple[str, str, str]:
     token = access_token.split(' ')[1]
     payload = jwt.decode(token, os.getenv("JWT_SALT"), algorithms=['HS256'])
     
     user_claims = payload['user_claims']
     role = user_claims['roles'][0]['name']
     user_id = payload['identity']
-    return role, user_id
+    email = user_claims['email']
+    return role, user_id, email

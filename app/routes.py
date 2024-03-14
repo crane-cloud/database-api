@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 import requests
 import os
 import json
-from app.helpers.database_service import generate_db_credentials
+from app.helpers.database_service import generate_db_credentials, MysqlDbService, PostgresqlDbService
 from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat
 from app.helpers.logger import send_log_message, log_response, send_async_log_message
 from typing import Annotated
@@ -23,7 +23,7 @@ router = APIRouter()
 
 @router.get("/databases/stats")
 def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     dbs_per_flavour = {}
     tot_database_count = 0
     
@@ -41,6 +41,7 @@ def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , d
       "operation": "Stats",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Stats successfully fetched."
     }
@@ -50,7 +51,7 @@ def fetch_database_stats(access_token:Annotated[str | None, Header()] = None , d
 
 @router.get("/databases")
 def get_all_databases(access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     if user_role == "administrator":
         databases = db.query(Database).all()
     else:
@@ -60,6 +61,7 @@ def get_all_databases(access_token:Annotated[str | None, Header()] = None , db: 
       "operation": "GET",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Databases successfully fetched."
     }
@@ -71,13 +73,14 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
 
   credentials = generate_db_credentials()
   db_flavor = get_db_flavour(database.database_flavour_name)
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
 
   if not db_flavor:
     log_data = {
       "operation": "Create",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "url": "/databases",
       "model":"Database",
       "description":"Wrong database flavour name"
@@ -94,6 +97,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
       "operation": "Create",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Database with this name already exists"
     }
@@ -106,6 +110,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
       "operation": "Create",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Database with this user already exists"
     }
@@ -120,7 +125,8 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
       database_flavour_name=database.database_flavour_name,
       host=db_flavor['host'],
       port=db_flavor['port'],
-      owner_id= user_id
+      owner_id= user_id,
+      email=user_email
   )
 
   try:
@@ -138,6 +144,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
       "operation": "Create",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Failed to connect to this database"
     }
@@ -162,6 +169,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
       "operation": "Create",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Failed to create database"
     }
@@ -179,6 +187,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
     "operation": "Create",
     "status": "Success",
     "user_id": user_id,
+    "user_email": user_email,
     "model":"Database",
     "description":"Database successfully created."
   }
@@ -191,7 +200,7 @@ def create_database(database: DatabaseFlavor, access_token:Annotated[str | None,
 
 @router.get("/databases/mysql")
 def get_mysql_databases(access_token:Annotated[str | None, Header()] = None ,db: Session = Depends(get_db)):
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     if user_role == "administrator":
         databases = db.query(Database).filter(Database.database_flavour_name == "mysql").all()
     else:
@@ -201,6 +210,7 @@ def get_mysql_databases(access_token:Annotated[str | None, Header()] = None ,db:
       "operation": "GET",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"MYSQL Databases successfully fetched."
     }
@@ -209,7 +219,7 @@ def get_mysql_databases(access_token:Annotated[str | None, Header()] = None ,db:
 
 @router.get("/databases/postgresql")
 def get_postgresql_databases(access_token:Annotated[str | None, Header()] = None ,db: Session = Depends(get_db)):
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     if user_role == "administrator":
         databases = db.query(Database).filter(Database.database_flavour_name == "postgres").all()
     else:
@@ -218,6 +228,7 @@ def get_postgresql_databases(access_token:Annotated[str | None, Header()] = None
       "operation": "GET",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Postgresql Databases successfully fetched."
     }
@@ -226,37 +237,103 @@ def get_postgresql_databases(access_token:Annotated[str | None, Header()] = None
 
 @router.get("/databases/{database_id}")
 def single_database(database_id:str, access_token:Annotated[str | None, Header()] = None ,db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
-  user_database = db.query(Database).filter(Database.id == database_id).first()
-  if not user_database:
+    user_role, user_id, user_email = get_current_user(access_token)
+    user_database = db.query(Database).filter(Database.id == database_id).first()
+    if not user_database:
+      log_data = {
+        "operation": "GET",
+        "status": "Failed",
+        "user_id": user_id,
+        "user_email": user_email,
+        "model":"Database",
+        "description":f"Failed to get Database with ID: {user_database.id}"
+      }
+      send_async_log_message(log_data)
+      raise HTTPException(status_code=404, detail="Database not found")
+    
+    flavour_name = user_database.database_flavour_name
+    if not flavour_name:
+        flavour_name = "mysql"
+
+    db_flavour = get_db_flavour(flavour_name)
+
+    if not db_flavour:
+        log_data = {
+          "operation": "Create",
+          "status": "Failed",
+          "user_id": user_id,
+          "user_email": user_email,
+          "url": "/databases",
+          "model":"Database",
+          "description":"Wrong database flavour name"
+        }
+        send_async_log_message(log_data)
+        return dict(
+          status="fail",
+          message=f"Database flavour with name {user_database.database_flavour_name} is not mysql or postgres."
+        ), 404
+    
+    database_service = db_flavour['class']
+
+    # Get db status
+    try:
+        database_connection = database_service.create_db_connection(
+            user=user_database.user, password=user_database.password, db_name=user_database.name)
+        if not database_connection:
+            db_status = False
+        else:
+            db_status = True
+    except:
+        db_status = False
+    finally:
+        if database_connection:
+            if database_service == MysqlDbService():
+                if database_connection.is_connected():
+                    database_connection.close()
+                else:
+                    database_connection.close()
+
+    database_dict = {
+      "id": user_database.id,
+      "host": user_database.host,
+      "name": user_database.name,
+      "user": user_database.user,
+      "password": user_database.password,
+      "owner_id": user_database.owner_id,
+      "date_created": user_database.date_created,
+      "port": user_database.port,
+      "database_flavour_name": user_database.database_flavour_name,
+      "deleted": user_database.deleted,
+      "disabled": user_database.disabled,
+      "admin_disabled": user_database.admin_disabled,
+      "email": user_database.email,
+      "default_storage_kb": user_database.default_storage_kb,
+      "allocated_size_kb": user_database.allocated_size_kb }
+    
+    database_dict['db_status'] = db_status
+    database_dict['default_storage_kb'] = database_service.get_database_size(
+              user=user_database.user, password=user_database.password, db_name=user_database.name)
     log_data = {
-      "operation": "GET",
-      "status": "Failed",
+      "operation": "Get",
+      "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
-      "description":f"Failed to get Database with ID: {user_database.id}"
+      "description":f"Fetch single Database {user_database.id}"
     }
     send_async_log_message(log_data)
-    raise HTTPException(status_code=404, detail="Databases not found")
-  log_data = {
-    "operation": "Get",
-    "status": "Success",
-    "user_id": user_id,
-    "model":"Database",
-    "description":f"Fetch single Database {user_database.id}"
-  }
-  send_async_log_message(log_data)
-  return user_database
+    return database_dict
 
 @router.get("/databases/{database_id}/password")
 def get_database_password(database_id:str, access_token:Annotated[str | None, Header()] = None ,db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   db_exists = db.query(Database).filter(Database.id == database_id).first()
   if not db_exists:
     log_data = {
       "operation": "GET PASSWORD",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {db_exists.id}"
     }
@@ -266,6 +343,7 @@ def get_database_password(database_id:str, access_token:Annotated[str | None, He
     "operation": "Get",
     "status": "Success",
     "user_id": user_id,
+    "user_email": user_email,
     "model":"Database",
     "description":f"Get Database password for database: {db_exists.id}"
   }
@@ -274,13 +352,14 @@ def get_database_password(database_id:str, access_token:Annotated[str | None, He
 
 @router.post("/databases/{database_id}/enable")
 def enable_database(database_id:str,access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     log_data = {
       "operation": "DATABASE ENABLE",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {database.id}"
     }
@@ -292,6 +371,7 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
         "operation": "DATABASE ENABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"Database: {database.id} is already enabled."
       }
@@ -304,6 +384,7 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
       "operation": "DATABASE ENABLE",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Database: {database.id} is successfully enabled."
     }
@@ -315,6 +396,7 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
         "operation": "DATABASE ENABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"Database: {database.id} is already enabled."
       }
@@ -326,6 +408,7 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
         "operation": "DATABASE ENABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"You are not authorised to enable Database: {database.id}"
       }
@@ -338,6 +421,7 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
       "operation": "DATABASE ENABLE",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Database: {database.id} is successfully enabled."
     }
@@ -347,13 +431,14 @@ def enable_database(database_id:str,access_token:Annotated[str | None, Header()]
 
 @router.post("/databases/{database_id}/disable")
 def disable_database(database_id:str, access_token:Annotated[str | None, Header()] = None ,db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     log_data = {
       "operation": "DATABASE DISABLE",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {database.id}"
     }
@@ -365,6 +450,7 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
         "operation": "DATABASE DISABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"Database: {database.id} is already disabled."
       }
@@ -377,6 +463,7 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
       "operation": "DATABASE DISABLE",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Database: {database.id} is successfully disabled."
     }
@@ -388,6 +475,7 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
         "operation": "DATABASE DISABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"Database: {database.id} is already disabled."
       }
@@ -399,6 +487,7 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
         "operation": "DATABASE DISABLE",
         "status": "Failed",
         "user_id": user_id,
+        "user_email": user_email,
         "model":"Database",
         "description":f"You are not authorised to disable Database: {database.id}"
       }
@@ -411,6 +500,7 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
       "operation": "DATABASE DISABLE",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Database: {database.id} is successfully disabled."
     }
@@ -419,13 +509,14 @@ def disable_database(database_id:str, access_token:Annotated[str | None, Header(
 
 @router.delete("/databases/{database_id}")
 def delete_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     log_data = {
       "operation": "DATABASE DELETE",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {database.id}"
     }
@@ -437,6 +528,7 @@ def delete_database(database_id:str, access_token:Annotated[str | None, Header()
     "operation": "DATABASE DELETE",
     "status": "Success",
     "user_id": user_id,
+    "user_email": user_email,
     "model":"Database",
     "description":f"Database: {database.id} is successfully deleted."
   }
@@ -446,13 +538,14 @@ def delete_database(database_id:str, access_token:Annotated[str | None, Header()
 @router.post("/databases/{database_id}/reset")
 @authenticate
 def reset_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   database = db.query(Database).filter(Database.id == database_id).first()
   if database is None:
     log_data = {
       "operation": "DATABASE RESET",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {database.id}"
     }
@@ -466,6 +559,7 @@ def reset_database(database_id:str, access_token:Annotated[str | None, Header()]
       "operation": "RESET",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "url": "/databases",
       "model":"Database",
       "description":"Wrong database flavour name"
@@ -485,6 +579,7 @@ def reset_database(database_id:str, access_token:Annotated[str | None, Header()]
       "operation": "RESET",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Failed to connect to this database"
     }
@@ -505,6 +600,7 @@ def reset_database(database_id:str, access_token:Annotated[str | None, Header()]
       "operation": "RESET",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to reset database: {database.id}"
     }
@@ -517,6 +613,7 @@ def reset_database(database_id:str, access_token:Annotated[str | None, Header()]
     "operation": "DATABASE RESET",
     "status": "Success",
     "user_id": user_id,
+    "user_email": user_email,
     "model":"Database",
     "description":f"Database: {database.id} is successfully reset."
   }
@@ -526,13 +623,14 @@ def reset_database(database_id:str, access_token:Annotated[str | None, Header()]
 @router.post("/databases/{database_id}/reset_password")
 @authenticate
 def password_reset_database(database_id:str, field_update:PasswordUpdate, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-  user_role, user_id = get_current_user(access_token)
+  user_role, user_id, user_email = get_current_user(access_token)
   database = db.query(Database).filter(Database.id == database_id).first()
   if not database:
     log_data = {
       "operation": "RESET PASSWORD",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to get Database with ID: {database.id}"
     }
@@ -546,6 +644,7 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
       "operation": "RESET PASSWORD",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Wrong database flavour name"
     }
@@ -564,6 +663,7 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
       "operation": "RESET PASSWORD",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Failed to connect to this database"
     }
@@ -584,6 +684,7 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
       "operation": "RESET PASSWORD",
       "status": "Failed",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":f"Failed to reset database passsword for: {database.id}"
     }
@@ -600,6 +701,7 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
     "operation": "DATABASE PASSWORD RESET",
     "status": "Success",
     "user_id": user_id,
+    "user_email": user_email,
     "model":"Database",
     "description":f"Database: {database.id} password is successfully reset."
   }
@@ -609,13 +711,14 @@ def password_reset_database(database_id:str, field_update:PasswordUpdate, access
 
 @router.patch("/database/{database_id}/storage")
 def allocate_storage(database_id: str, additional_storage: int, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
         log_data = {
           "operation": "ADD STORAGE",
           "status": "Failed",
           "user_id": user_id,
+          "user_email": user_email,
           "model":"Database",
           "description":f"Failed to get Database with ID: {database.id}"
         }
@@ -634,6 +737,7 @@ def allocate_storage(database_id: str, additional_storage: int, access_token:Ann
           "operation": "RESET",
           "status": "Failed",
           "user_id": user_id,
+          "user_email": user_email,
           "model":"Database",
           "description":"Failed to connect to this database"
         }
@@ -648,7 +752,7 @@ def allocate_storage(database_id: str, additional_storage: int, access_token:Ann
 @router.get("/database/graph")
 def database_graph_data(start: Optional[str] = Query( description="Start date format(YYYY-MM-DD)", default=graph_filter_datat['start']), access_token:Annotated[str | None, Header()] = None , end: Optional[str] = Query( description="End date format(YYYY-MM-DD)", default=graph_filter_datat['end']),set_by: Optional[str] = Query( description="Either month or year", default=graph_filter_datat['set_by']),db_flavour: Optional[str] = Query(None, description="Database flavour either mysql or postgres"), db: Session = Depends(get_db)):
     """ Shows databases graph data """
-    user_role, user_id = get_current_user(access_token)
+    user_role, user_id, user_email = get_current_user(access_token)
     graph_filter_data = {
     }
     try:
@@ -671,6 +775,7 @@ def database_graph_data(start: Optional[str] = Query( description="Start date fo
           "operation": "Graph data",
           "status": "Failed",
           "user_id": user_id,
+          "user_email": user_email,
           "model":"Database",
           "description":f"Failed due to: {e}"
         }
@@ -686,6 +791,7 @@ def database_graph_data(start: Optional[str] = Query( description="Start date fo
               "operation": "Graph Data",
               "status": "Failed",
               "user_id": user_id,
+              "user_email": user_email,
               "model":"Database",
               "description":"Wrong database flavour name"
             }
@@ -742,9 +848,88 @@ def database_graph_data(start: Optional[str] = Query( description="Start date fo
       "operation": "Graph Data",
       "status": "Success",
       "user_id": user_id,
+      "user_email": user_email,
       "model":"Database",
       "description":"Graph data successfully fetched."
     }
     send_async_log_message(log_data)
     return {'status': 'success',  'data': {'metadata': metadata, 'graph_data': db_info}}
+
+@router.post("/databases/{database_id}/revoke_write_access")
+def revoke_write_access(database_id:str,access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
+  user_role, user_id, user_email = get_current_user(access_token)
+
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if database is None:
+    log_data = {
+      "operation": "DATABASE REVOKE",
+      "status": "Failed",
+      "user_id": user_id,
+      "user_email": user_email,
+      "model":"Database",
+      "description":f"Failed to get Database with ID: {database.id}"
+    }
+    send_async_log_message(log_data)
+    raise HTTPException(status_code=404, detail="Databases not found")
+  if user_role == "administrator":
+    if (database.admin_disabled == False):
+      log_data = {
+        "operation": "DATABASE ENABLE",
+        "status": "Failed",
+        "user_id": user_id,
+        "user_email": user_email,
+        "model":"Database",
+        "description":f"Database: {database.id} is already enabled."
+      }
+      send_async_log_message(log_data)
+      raise HTTPException(status_code=404, detail="Databases is already enabled.")
     
+    database.admin_disabled = False
+    db.commit()
+    log_data = {
+      "operation": "DATABASE ENABLE",
+      "status": "Success",
+      "user_id": user_id,
+      "user_email": user_email,
+      "model":"Database",
+      "description":f"Database: {database.id} is successfully enabled."
+    }
+    send_async_log_message(log_data)
+    return {"message": "Database enabled successfully"}
+  else:
+    if (database.disabled == False):
+      log_data = {
+        "operation": "DATABASE ENABLE",
+        "status": "Failed",
+        "user_id": user_id,
+        "user_email": user_email,
+        "model":"Database",
+        "description":f"Database: {database.id} is already enabled."
+      }
+      send_async_log_message(log_data)
+      raise HTTPException(status_code=404, detail="Databases is already enabled.")
+    
+    if database.admin_disabled:
+      log_data = {
+        "operation": "DATABASE ENABLE",
+        "status": "Failed",
+        "user_id": user_id,
+        "user_email": user_email,
+        "model":"Database",
+        "description":f"You are not authorised to enable Database: {database.id}"
+      }
+      send_async_log_message(log_data)
+      return {"message": f"You are not authorised to enable Database with id {database_id}, please contact an admin"}
+    
+    database.disabled = False
+    db.commit()
+    log_data = {
+      "operation": "DATABASE ENABLE",
+      "status": "Success",
+      "user_id": user_id,
+      "user_email": user_email,
+      "model":"Database",
+      "description":f"Database: {database.id} is successfully enabled."
+    }
+    send_async_log_message(log_data)
+    return {"message": "Database enabled successfully"}

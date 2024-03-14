@@ -9,6 +9,7 @@ class DatabaseSchema(BaseModel):
     user: str
     password: str
     owner_id: str
+    email: str
     port: Optional[int]
     database_flavour_name: str 
     deleted: bool = False
