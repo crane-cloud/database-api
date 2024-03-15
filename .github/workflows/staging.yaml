@@ -56,6 +56,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
+          file: docker/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -118,6 +119,14 @@ jobs:
           --set image.tag="${{ needs.build.outputs.tag }}" \
           --set environment.DATABASE_URI="${{ secrets.STAGING_MONGO_URI }}" \
           --set environment.JWT_SALT="${{ secrets.STAGING_JWT_SALT }}" \
+          --set environment.ADMIN_MYSQL_USER="${{ secrets.STAGING_ADMIN_MYSQL_USER }}" \
+          --set environment.ADMIN_MYSQL_PASSWORD="${{ secrets.STAGING_ADMIN_MYSQL_PASSWORD }}" \
+          --set environment.ADMIN_MYSQL_HOST="${{ secrets.STAGING_ADMIN_MYSQL_HOST }}" \
+          --set environment.ADMIN_MYSQL_PORT="${{ secrets.STAGING_ADMIN_MYSQL_PORT }}" \
+          --set environment.ADMIN_PSQL_USER="${{ secrets.STAGING_ADMIN_PSQL_USER }}" \
+          --set environment.ADMIN_PSQL_PASSWORD="${{ secrets.STAGING_ADMIN_PSQL_PASSWORD }}" \
+          --set environment.ADMIN_PSQL_HOST="${{ secrets.STAGING_ADMIN_PSQL_HOST }}" \
+          --set environment.ADMIN_PSQL_PORT="${{ secrets.STAGING_ADMIN_PSQL_PORT }}" \
           --timeout=300s
 
       - name: Monitor Rollout

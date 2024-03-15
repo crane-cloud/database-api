@@ -8,18 +8,19 @@ class BaseConfig:
     JWT_SALT: str = os.getenv("JWT_SALT")
     
     # Admin databases
-    ADMIN_MYSQL_HOST: str = os.getenv("ADMIN_MYSQL_HOST")
-    ADMIN_MYSQL_PORT: int = os.getenv("ADMIN_MYSQL_PORT")
     ADMIN_PSQL_HOST: str = os.getenv("ADMIN_PSQL_HOST")
     ADMIN_PSQL_PORT: int = os.getenv("ADMIN_PSQL_PORT")
-
-
-class DevelopmentConfig(BaseConfig):
     ADMIN_PSQL_USER : str = os.getenv("ADMIN_PSQL_USER")
     ADMIN_PSQL_PASSWORD : str = os.getenv("ADMIN_PSQL_PASSWORD")
 
     ADMIN_MYSQL_USER : str = os.getenv("ADMIN_MYSQL_USER")
     ADMIN_MYSQL_PASSWORD : str = os.getenv("ADMIN_MYSQL_PASSWORD")
+    ADMIN_MYSQL_HOST: str = os.getenv("ADMIN_MYSQL_HOST")
+    ADMIN_MYSQL_PORT: int = os.getenv("ADMIN_MYSQL_PORT")
+
+
+class DevelopmentConfig(BaseConfig):
+    pass
 
 class ProductionConfig(BaseConfig):
     pass
