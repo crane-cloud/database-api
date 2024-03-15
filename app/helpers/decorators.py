@@ -1,10 +1,11 @@
 from jose import JWTError, jwt
 from functools import wraps
 from app.helpers.auth import has_role
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import HTTPException
 from jose.exceptions import JWKError , JWTError
-import os
-import requests
+from config import settings
+
+JWT_SALT = settings.JWT_SALT
 
 def authenticate(fn):
     @wraps(fn)
@@ -20,7 +21,7 @@ def authenticate(fn):
             if (kwargs['access_token'].split(' ')[0] != "Bearer"):
                 raise HTTPException(status_code=422, detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
             
-            payload = jwt.decode(token, os.getenv("JWT_SALT") , algorithms= ['HS256'])
+            payload = jwt.decode(token, JWT_SALT, algorithms= ['HS256'])
             
             kwargs['current_user'] = payload
             
@@ -42,7 +43,7 @@ def admin_or_user_required(fn):
     @authenticate
     def wrapper(*args, **kwargs):
         token = kwargs['access_token'].split(' ')[1]
-        payload = jwt.decode(token , os.getenv("JWT_SALT") , algorithms= ['HS256'])
+        payload = jwt.decode(token ,  JWT_SALT, algorithms= ['HS256'])
         current_user = kwargs['current_user']
 
         kwargs['is_admin'] = has_role(current_user, "administrator")

@@ -1,5 +1,5 @@
-from jose import JWTError, jwt
-import os
+from jose import  jwt
+from config import settings
 
 
 def has_role(role_list, role_name) -> bool:
@@ -10,7 +10,7 @@ def has_role(role_list, role_name) -> bool:
 
 def get_current_user(access_token) -> tuple[str, str, str]:
     token = access_token.split(' ')[1]
-    payload = jwt.decode(token, os.getenv("JWT_SALT"), algorithms=['HS256'])
+    payload = jwt.decode(token, settings.JWT_SALT, algorithms=['HS256'])
     
     user_claims = payload['user_claims']
     role = user_claims['roles'][0]['name']

@@ -5,6 +5,7 @@ from functools import lru_cache
 class BaseConfig:
     DATABASE_URI: str = os.getenv("DATABASE_URI")
     DATABASE_USER: str = os.getenv("DATABASE_USER")
+    JWT_SALT: str = os.getenv("JWT_SALT")
     
     # Admin databases
     ADMIN_MYSQL_HOST: str = os.getenv("ADMIN_MYSQL_HOST")
