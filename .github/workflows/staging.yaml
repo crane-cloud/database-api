@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - develop
-      - deploy/database-logger
+      - deploy/database-api
 
   workflow_dispatch:
 
