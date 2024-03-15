@@ -7,6 +7,8 @@ class BaseConfig:
     DATABASE_USER: str = os.getenv("DATABASE_USER")
     JWT_SALT: str = os.getenv("JWT_SALT")
     
+    ACTIVITY_LOGGER_URL = os.getenv("ACTIVITY_LOGGER_URL")
+    
     # Admin databases
     ADMIN_PSQL_HOST: str = os.getenv("ADMIN_PSQL_HOST")
     ADMIN_PSQL_PORT: int = os.getenv("ADMIN_PSQL_PORT")

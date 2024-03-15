@@ -1,11 +1,9 @@
 replicaCount: 1
 
 image:
-  # repository: gcr.io/crane-cloud-274413/cranecloud-database-api
-  repository: mubangizi/database-api
+  repository: gcr.io/crane-cloud-274413/cranecloud-database-api
   pullPolicy: Always
-  # tag: ${{ DOCKER_IMAGE_TAG }}
-  tag: latest
+  tag: ${{ DOCKER_IMAGE_TAG }}
 
 imagePullSecrets: []
 
@@ -58,8 +56,9 @@ nginxConf:
 
 environment:
   FASTAPI_ENV: production
-  # DATABASE_URI: ${{ DATABASE_URI }}
-  # JWT_SALT: ${{ JWT_SALT }}
+  DATABASE_URI: ${{ DATABASE_URI }}
+  JWT_SALT: ${{ JWT_SALT }}
+  ACTIVITY_LOGGER_URL: ${{ ACTIVITY_LOGGER_URL }}
   ADMIN_MYSQL_USER: ${{ ADMIN_MYSQL_USER }}
   ADMIN_MYSQL_PASSWORD: ${{ ADMIN_MYSQL_PASSWORD }}
   ADMIN_MYSQL_HOST: ${{ ADMIN_MYSQL_HOST }}
@@ -69,8 +68,6 @@ environment:
   ADMIN_PSQL_HOST: ${{ ADMIN_PSQL_HOST }}
   ADMIN_PSQL_PORT: ${{ ADMIN_PSQL_PORT }}
 
-  JWT_SALT: "LS0tLQpNSUlFb3dJQkFBS0NBUUVBeENCMk"
-  DATABASE_URI: postgresql://mgfygqxffahnalwp:7hx#,W^prBhrVwpBndB6yDd_1C%hbogN@102.134.147.233:32761/eybsyqyftilqwepfdteeesnd
   
 
 celery:

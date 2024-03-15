@@ -5,7 +5,7 @@ from config import settings
 from datetime import datetime
 from app.models import Database
 from sqlalchemy.orm import Session
-from app.helpers.logger import send_log_message, log_response, send_async_log_message
+from app.helpers.logger import send_log_message, send_async_log_message
 
 graph_filter_datat = {
   'start': '2018-01-01',

@@ -117,8 +117,9 @@ jobs:
           --values helm/values.staging.yaml \
           --namespace cranecloud-microservice \
           --set image.tag="${{ needs.build.outputs.tag }}" \
-          --set environment.DATABASE_URI="${{ secrets.STAGING_MONGO_URI }}" \
+          --set environment.DATABASE_URI="${{ secrets.STAGING_DATABASE_URI }}" \
           --set environment.JWT_SALT="${{ secrets.STAGING_JWT_SALT }}" \
+          --set environment.ACTIVITY_LOGGER_URL="${{ secrets.STAGING_ACTIVITY_LOGGER_URL }}" \
           --set environment.ADMIN_MYSQL_USER="${{ secrets.STAGING_ADMIN_MYSQL_USER }}" \
           --set environment.ADMIN_MYSQL_PASSWORD="${{ secrets.STAGING_ADMIN_MYSQL_PASSWORD }}" \
           --set environment.ADMIN_MYSQL_HOST="${{ secrets.STAGING_ADMIN_MYSQL_HOST }}" \
