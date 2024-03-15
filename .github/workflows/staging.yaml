@@ -112,7 +112,7 @@ jobs:
 
       - name: Helm Release
         run: |
-          helm upgrade --install \
+          helm install \
           database-api ./helm/chart \
           --values helm/values.staging.yaml \
           --namespace cranecloud-microservice \
