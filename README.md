@@ -7,6 +7,7 @@ The database API offers a convenient and efficient way to create MySQL and Postg
 Follow these steps to have a local running copy of the app.
 
 Clone The Repo
+
 ```
 git clone https://github.com/crane-cloud/database-api.git
 ```
@@ -20,3 +21,5 @@ In the project directory, running `make` shows you a list of commands to use.
 Run `make start` to start the application and required services.
 
 Run `make connect-to-container` to connect to the FastAPI application container.
+
+Run `make test` to run tests in the application
