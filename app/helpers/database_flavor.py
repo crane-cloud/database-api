@@ -147,3 +147,58 @@ def enable_database(database: Database, db: Session):
             message=str(err),
             status_code=500
         )
+
+def revoke_database(database: Database):
+    # get connection
+    db_flavour = get_db_flavour(database.database_flavour_name)
+    database_service = db_flavour['class']
+    database_connection = database_service.check_db_connection()
+
+    if not database_connection:
+        return SimpleNamespace(
+            message="Failed to connect to the database service",
+            status_code=500
+        )
+
+    if (db_flavour['name'] == 'postgres'):
+        revoke_database = database_service.disable_user_access(
+            database.name, database.user)
+    else :
+        revoke_database = database_service.disable_user_access(
+            database.name, database.user)
+
+    if not revoke_database:
+        return SimpleNamespace(
+            message="Unable to revoke database",
+            status_code=500
+        )
+    
+    return True
+
+def undo_database_revoke(database: Database):
+    # get connection
+    db_flavour = get_db_flavour(database.database_flavour_name)
+    database_service = db_flavour['class']
+    database_connection = database_service.check_db_connection()
+
+    if not database_connection:
+        return SimpleNamespace(
+            message="Failed to connect to the database service",
+            status_code=500
+        )
+
+    if (db_flavour['name'] == 'postgres'):
+        revoke_database = database_service.enable_user_write_access(
+            database.name, database.user)
+    else :
+        revoke_database = database_service.enable_user_write_access(
+            database.name, database.user)
+
+    if not revoke_database:
+        return SimpleNamespace(
+            message="Unable to revoke database",
+            status_code=500
+        )
+    
+    return True
+    
