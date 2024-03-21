@@ -1,4 +1,5 @@
 import os
+from app.helpers.logger import send_async_log_message
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
 
     @app.get('/', tags=['Index'])
     def index():
+        send_async_log_message({"route": "temp_info"})
         return {"Welcome to the Database Service"}
 
     @app.exception_handler(ValidationError)
