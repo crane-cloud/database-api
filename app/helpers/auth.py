@@ -10,7 +10,7 @@ def has_role(role_list, role_name) -> bool:
     return False
 
 
-def get_current_user(access_token) -> tuple[str, str, str]:
+def get_current_user(access_token):
     try:
         token = access_token.split(' ')[1]
         payload = jwt.decode(token, settings.JWT_SALT, algorithms=['HS256'])
@@ -19,11 +19,9 @@ def get_current_user(access_token) -> tuple[str, str, str]:
         role = user_claims['roles'][0]['name']
         user_id = payload['identity']
         email = user_claims['email']
-
         return SimpleNamespace(
             role=role, id=user_id, email=email
         )
-
     except Exception as e:
         print(e)
         return None

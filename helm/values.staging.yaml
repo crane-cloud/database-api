@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: gcr.io/crane-cloud-274413/cranecloud-database-api
+  repository: cranecloud/database-api
   pullPolicy: Always
   tag: ${{ DOCKER_IMAGE_TAG }}
 
@@ -72,4 +72,3 @@ environment:
 
 celery:
   create: false
-  command: ''
