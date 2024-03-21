@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - develop
+      - deploy/database-api
 
   workflow_dispatch:
 
