@@ -91,7 +91,7 @@ jobs:
 
       - name: Helm Release
         run: |
-          helm install \
+          helm upgrade --install \
           database-api ./helm/chart \
           --values helm/values.staging.yaml \
           --namespace $namespace \
