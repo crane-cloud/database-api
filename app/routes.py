@@ -7,7 +7,7 @@ from app.helpers.database_session import get_db
 from typing import Optional
 from fastapi.responses import JSONResponse
 from app.helpers.database_service import generate_db_credentials, MysqlDbService
-from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat, disable_database, enable_database
+from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat, disable_database, enable_database, undo_database_revoke
 from app.helpers.logger import send_async_log_message
 from typing import Annotated
 from datetime import datetime
@@ -688,78 +688,87 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
 
     return {'status': 'success',  'data': {'metadata': metadata, 'graph_data': db_info}}
 
-
 @router.post("/databases/{database_id}/revoke_write_access")
-def revoke_write_access(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Invalid token")
+def revoke_write_access(database_id:str, db: Session = Depends(get_db)):
+  # user_role, user_id, user_email = get_current_user(access_token)
 
-    database = db.query(Database).filter(Database.id == database_id).first()
-    if not database:
-        raise HTTPException(status_code=404, detail="Databases not found")
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if database is None:
+    # log_data = {
+    #   "operation": "DATABASE REVOKE",
+    #   "status": "Failed",
+    #   # "user_id": user_id,
+    #   # "user_email": user_email,
+    #   "model":"Database",
+    #   "description":f"Failed to get Database with ID: {database.id}"
+    # }
+    # send_async_log_message(log_data)
+    raise HTTPException(status_code=404, detail="Databases not found")
+  
+  revoked_db = revoke_database(database)
+  if type(revoked_db) == SimpleNamespace:
+      status_code = revoked_db.status_code if revoked_db.status_code else 500
+      # log_data = {
+      #   "operation": "DATABASE ENABLE",
+      #   "status": "Failed",
+      #   "user_id": user_id,
+      #   "user_email": user_email,
+      #   "model":"Database",
+      #   "description":f"Database: {database.id} is {disbled_database.message}."
+      # }
+      # send_async_log_message(log_data)
+      return dict(status='fail', message=revoked_db.message), status_code
+  # log_data = {
+  #   "operation": "DATABASE REVOKE",
+  #   "status": "Success",
+  #   "user_id": user_id,
+  #   "user_email": user_email,
+  #   "model":"Database",
+  #   "description":f"Database: {database.id} is successfully revoked."
+  # }
+  # send_async_log_message(log_data)
+  return {"message": "Database revoked successfully"}
 
-    if current_user.role == "administrator":
-        if not database.admin_disabled:
-            log_data = {
-                "operation": "DATABASE ENABLE",
-                "status": "Failed",
-                "user_id": current_user.id,
-                "user_email": current_user.email,
-                "model": "Database",
-                "description": f"Database: {database.id} is already enabled."
-            }
-            send_async_log_message(log_data)
-            raise HTTPException(
-                status_code=404, detail="Databases is already enabled.")
+@router.post("/databases/{database_id}/undo_database_revoke")
+def undo_database_revoke(database_id:str, db: Session = Depends(get_db)):
+  # print("tutuse")
+  # print(access_token)
+  # print("tetunaba")
+  # user_role, user_id, user_email = get_current_user(access_token)
 
-        database.admin_disabled = False
-        db.commit()
-        log_data = {
-            "operation": "DATABASE ENABLE",
-            "status": "Success",
-            "user_id": current_user.id,
-            "user_email": current_user.email,
-            "model": "Database",
-            "description": f"Database: {database.id} is successfully enabled."
-        }
-        send_async_log_message(log_data)
-        return {"message": "Database enabled successfully"}
-    else:
-        if not database.disabled:
-            log_data = {
-                "operation": "DATABASE ENABLE",
-                "status": "Failed",
-                "user_id": current_user.id,
-                "user_email": current_user.email,
-                "model": "Database",
-                "description": f"Database: {database.id} is already enabled."
-            }
-            send_async_log_message(log_data)
-            raise HTTPException(
-                status_code=404, detail="Databases is already enabled.")
-
-        if database.admin_disabled:
-            log_data = {
-                "operation": "DATABASE ENABLE",
-                "status": "Failed",
-                "user_id": current_user.id,
-                "user_email": current_user.email,
-                "model": "Database",
-                "description": f"You are not authorised to enable Database: {database.id}"
-            }
-            send_async_log_message(log_data)
-            return {"message": f"You are not authorised to enable Database with id {database_id}, please contact an admin"}
-
-        database.disabled = False
-        db.commit()
-        log_data = {
-            "operation": "DATABASE ENABLE",
-            "status": "Success",
-            "user_id": current_user.id,
-            "user_email": current_user.email,
-            "model": "Database",
-            "description": f"Database: {database.id} is successfully enabled."
-        }
-        send_async_log_message(log_data)
-        return {"message": "Database enabled successfully"}
+  database = db.query(Database).filter(Database.id == database_id).first()
+  if database is None:
+    # log_data = {
+    #   "operation": "DATABASE UNREVOKE",
+    #   "status": "Failed",
+    #   "user_id": user_id,
+    #   "user_email": user_email,
+    #   "model":"Database",
+    #   "description":f"Failed to get Database with ID: {database.id}"
+    # }
+    # send_async_log_message(log_data)
+    raise HTTPException(status_code=404, detail="Databases not found")
+  
+  revoked_db = undo_database_revoke(database)
+  if type(revoked_db) == SimpleNamespace:
+      status_code = revoked_db.status_code if revoked_db.status_code else 500
+      # log_data = {
+      #   "operation": "DATABASE UNREVOKE",
+      #   "status": "Failed",
+      #   "user_id": user_id,
+      #   "user_email": user_email,
+      #   "model":"Database",
+      #   "description":f"Database: {database.id} is {revoked_db.message}."
+      # }
+      # send_async_log_message(log_data)
+      return dict(status='fail', message=revoked_db.message), status_code
+  # log_data = {
+  #   "operation": "DATABASE UNREVOKE",
+  #   "status": "Success",
+  #   "user_id": user_id,
+  #   "user_email": user_email,
+  #   "model":"Database",
+  #   "description":f"Database: {database.id} is unrevoked successfully."
+  # }
+  # send_async_log_message(log_data)
+  return {"message": "Database unrevoked successfully"}
