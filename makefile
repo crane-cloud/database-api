@@ -35,7 +35,8 @@ upgrade: ## Upgrade database migrations
 test: ## Run tests
 	@ ${INFO} "Running tests with coverage"
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) up -d database_db
-	@ export FASTAPI_ENV=testing && pytest tests -x -vv --cov=. --cov-report=term-missing
+	@ export FASTAPI_ENV=testing && coverage run --source app/ -m pytest
+	@ coveralls
 	@ ${INFO} "Tests complete"
 
 clean: ## Remove all project images and volumes

@@ -1,4 +1,5 @@
 # Database API
+[![Coverage Status](https://coveralls.io/repos/github/crane-cloud/database-api/badge.svg?branch=ch/setup-tests)](https://coveralls.io/github/crane-cloud/database-api?branch=ch/setup-tests)
 
 The database API offers a convenient and efficient way to create MySQL and PostgreSQL databases for users on the Crane Cloud platform
 
