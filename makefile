@@ -32,6 +32,13 @@ upgrade: ## Upgrade database migrations
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) exec database-api /bin/bash -c "poetry run alembic upgrade head"
 	@ ${INFO} "Migrations complete"
 
+test: ## Run tests
+	@ ${INFO} "Running tests with coverage"
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) up -d database_db
+	@ export FASTAPI_ENV=testing && coverage run --source app/ -m pytest
+	@ coveralls
+	@ ${INFO} "Tests complete"
+
 clean: ## Remove all project images and volumes
 	@ ${INFO} "Cleaning your local environment"
 	@ ${INFO} "Note: All ephemeral volumes will be destroyed"
