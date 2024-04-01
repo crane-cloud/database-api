@@ -1,0 +1,113 @@
+---
+name: staging
+
+on:
+  push:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    outputs:
+      image: ${{ steps.export.outputs.image }}
+      tag: ${{ steps.export.outputs.tag }}
+
+    runs-on: ubuntu-latest
+    env:
+      image: cranecloud/database-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install (Buildx)
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: meta
+        name: Tag
+        uses: docker/metadata-action@v3
+        with:
+          flavor: |
+            latest=true
+          images: ${{ env.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          context: .
+          file: docker/Dockerfile
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - id: export
+        name: Export
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const metadata = JSON.parse(`${{ steps.meta.outputs.json }}`)
+            const fullUrl = metadata.tags.find((t) => t.includes(':sha-'))
+            if (fullUrl == null) {
+              core.error('Unable to find sha tag of image')
+            } else {
+              const tag = fullUrl.split(':')[1]
+              core.setOutput('image', fullUrl)
+              core.setOutput('tag', tag)
+            }
+
+  Staging:
+    name: Deploy (Staging)
+
+    needs:
+      - Build
+
+    runs-on: ubuntu-latest
+    env:
+      namespace: cranecloud-microservice
+      image: cranecloud/database-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
+
+      - name: Helm Release
+        run: |
+          helm upgrade --install \
+          database-api ./helm/chart \
+          --values helm/values.staging.yaml \
+          --namespace $namespace \
+          --set image.tag="${{ needs.build.outputs.tag }}" \
+          --set environment.DATABASE_URI="${{ secrets.STAGING_DATABASE_URI }}" \
+          --set environment.JWT_SALT="${{ secrets.STAGING_JWT_SALT }}" \
+          --set environment.ACTIVITY_LOGGER_URL="${{ secrets.STAGING_ACTIVITY_LOGGER_URL }}" \
+          --set environment.ADMIN_MYSQL_USER="${{ secrets.STAGING_ADMIN_MYSQL_USER }}" \
+          --set environment.ADMIN_MYSQL_PASSWORD="${{ secrets.STAGING_ADMIN_MYSQL_PASSWORD }}" \
+          --set environment.ADMIN_MYSQL_HOST="${{ secrets.STAGING_ADMIN_MYSQL_HOST }}" \
+          --set environment.ADMIN_MYSQL_PORT="${{ secrets.STAGING_ADMIN_MYSQL_PORT }}" \
+          --set environment.ADMIN_PSQL_USER="${{ secrets.STAGING_ADMIN_PSQL_USER }}" \
+          --set environment.ADMIN_PSQL_PASSWORD="${{ secrets.STAGING_ADMIN_PSQL_PASSWORD }}" \
+          --set environment.ADMIN_PSQL_HOST="${{ secrets.STAGING_ADMIN_PSQL_HOST }}" \
+          --set environment.ADMIN_PSQL_PORT="${{ secrets.STAGING_ADMIN_PSQL_PORT }}" \
+          --timeout=300s
+
+      - name: Monitor Rollout
+        run: |
+          kubectl rollout status deployment/database-api --timeout=300s --namespace $namespace

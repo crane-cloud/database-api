@@ -8,7 +8,7 @@ RUN apt-get update && apt install -y curl
 
 RUN pip install poetry
 
-ENV PATH="${PATH}:/root/.local/bin"
+# ENV PATH="${PATH}:/root/.local/bin"
 
 COPY ./pyproject.toml /app/pyproject.toml
 
@@ -21,4 +21,6 @@ COPY . /app
 
 EXPOSE 8000
 
+# CMD ["/app/scripts/start.sh"]
 CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
