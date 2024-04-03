@@ -1,10 +1,12 @@
 import os
+from fastapi import HTTPException
 from types import SimpleNamespace
 from app.helpers.database_service import MysqlDbService, PostgresqlDbService
 from config import settings
 from datetime import datetime
 from app.models import Database
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from app.helpers.logger import send_log_message, send_async_log_message
 
 graph_filter_datat = {
@@ -202,3 +204,46 @@ def undo_database_revoke(database: Database):
     
     return True
     
+def failed_database_connection(current_user, operation):
+    log_data = {
+        "operation": operation,
+        "status": "Failed",
+        "user_id": current_user.id,
+        "user_email": current_user.email,
+        "model": "Database",
+        "description": "Failed to connect to this database"
+    }
+    send_async_log_message(log_data)
+    return SimpleNamespace(
+        status_code=500,
+        message="Failed to connect to the database service"
+    )
+
+def database_not_found(current_user, operation, database_id):
+    log_data = {
+        "operation": operation,
+        "status": "Failed",
+        "user_id": current_user.user_id,
+        "model":"Database",
+        "description":f"Failed to get Database with ID: {database_id}"
+    }
+    send_async_log_message(log_data)
+    raise HTTPException(status_code=404, message="Database not found")
+
+def database_not_found(current_user, operation, database_id):
+    log_data = {
+        "operation": operation,
+        "status": "Failed",
+        "user_id": current_user.user_id,
+        "model":"Database",
+        "description":f"Failed to get Database with ID: {database_id}"
+    }
+    send_async_log_message(log_data)
+    raise HTTPException(status_code=404, message="Database not found")
+
+def save_to_database(db):
+    try:
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, message="Failed to save to the database") from e
