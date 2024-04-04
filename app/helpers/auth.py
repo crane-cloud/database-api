@@ -1,6 +1,7 @@
 from jose import jwt
 from config import settings
 from types import SimpleNamespace
+from fastapi import HTTPException
 
 
 def has_role(role_list, role_name) -> bool:
@@ -25,3 +26,7 @@ def get_current_user(access_token):
     except Exception as e:
         print(e)
         return None
+
+def check_authentication(current_user):
+    if not current_user:
+        raise HTTPException(status_code=401, message="Invalid token")
