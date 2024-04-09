@@ -28,7 +28,6 @@ def create_app() -> FastAPI:
 
     @app.get('/', tags=['Index'])
     def index():
-        send_async_log_message({"route": "temp_info"})
         return {"Welcome to the Database Service"}
 
     @app.exception_handler(ValidationError)

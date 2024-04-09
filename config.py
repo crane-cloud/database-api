@@ -30,6 +30,7 @@ class ProductionConfig(BaseConfig):
 
 class TestingConfig(BaseConfig):
     TEST_DATABASE_URI = os.getenv("TEST_DATABASE_URI")
+    FASTAPI_ENV = "testing"
 
 
 @lru_cache()

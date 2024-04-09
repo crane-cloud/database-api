@@ -6,10 +6,9 @@ from fastapi import HTTPException
 
 def has_role(role_list, role_name) -> bool:
     for role in role_list:
-        if role['name'] == role_name:
+        if isinstance(role, dict) and 'name' in role and role['name'] == role_name:
             return True
     return False
-
 
 def get_current_user(access_token):
     try:
@@ -24,9 +23,9 @@ def get_current_user(access_token):
             role=role, id=user_id, email=email
         )
     except Exception as e:
-        print(e)
-        return None
+        return SimpleNamespace(role=None, id=None, email=None)
 
 def check_authentication(current_user):
     if not current_user:
-        raise HTTPException(status_code=401, message="Invalid token")
+        # although our return format is of status_code and message for this exception class it has to be detail instead of message
+        raise HTTPException(status_code=401, detail="Invalid token")

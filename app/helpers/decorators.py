@@ -45,6 +45,7 @@ def admin_or_user_required(fn):
         token = kwargs['access_token'].split(' ')[1]
         payload = jwt.decode(token ,  JWT_SALT, algorithms= ['HS256'])
         current_user = kwargs['current_user']
+        print(current_user)
 
         kwargs['is_admin'] = has_role(current_user, "administrator")
         return fn(*args, **kwargs)

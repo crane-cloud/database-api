@@ -32,19 +32,26 @@ upgrade: ## Upgrade database migrations
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) exec database-api /bin/bash -c "poetry run alembic upgrade head"
 	@ ${INFO} "Migrations complete"
 
-test: ## Run tests
-	@ ${INFO} "Running tests with coverage"
-	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) up -d database_db
-	@ export FASTAPI_ENV=testing && coverage run --source app/ -m pytest
-	@ coveralls
-	@ ${INFO} "Tests complete"
-
 clean: ## Remove all project images and volumes
 	@ ${INFO} "Cleaning your local environment"
 	@ ${INFO} "Note: All ephemeral volumes will be destroyed"
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) down --rmi all
 	@ ${INFO} "Clean complete"
 
+build-test-image: ## Build test docker image
+	@ ${INFO} "Building test docker images"
+	@ export FASTAPI_ENV="testing"
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) build --build-arg FASTAPI_ENV=testing database-api
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) up -d database-api
+	@ ${INFO} "Test Image succesfully built"
+	@ echo " "
+
+test:build-test-image ## Run tests
+	@ ${INFO} "Running tests"
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) exec database-api poetry run pytest --cov=app
+	@ coveralls
+	@ ${INFO} "Tests complete"
+	
 
 # set default target
 .DEFAULT_GOAL := help
