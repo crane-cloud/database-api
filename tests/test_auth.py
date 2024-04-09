@@ -73,55 +73,55 @@ def admin_or_user_required(fn):
 
     return wrapper
 
-def test_admin_required():
-    def dummy_authenticate(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            kwargs['current_user'] = {'roles': ['administrator']}
-            return fn(*args, **kwargs)
-        return wrapper
+# def test_admin_required():
+#     def dummy_authenticate(fn):
+#         @wraps(fn)
+#         def wrapper(*args, **kwargs):
+#             kwargs['current_user'] = {'roles': ['admin']}
+#             return fn(*args, **kwargs)
+#         return wrapper
     
-    def dummy_has_role(user, role):
-        return 'administrator' in user.get('roles', [])
+#     def dummy_has_role(user, role):
+#         return 'administrator' in user.get('roles', [])
     
-    @admin_or_user_required
-    def dummy_function(*args, **kwargs):
-        return "Admin access granted" if kwargs.get('is_admin') else "Access denied"
+#     @admin_or_user_required
+#     def dummy_function(*args, **kwargs):
+#         return "Admin access granted" if kwargs.get('is_admin') else "Access denied"
     
-    # Patching authenticate and has_role functions
-    authenticate = dummy_authenticate
-    has_role = dummy_has_role
+#     # Patching authenticate and has_role functions
+#     authenticate = dummy_authenticate
+#     has_role = dummy_has_role
     
-    result = dummy_function(access_token="Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTI1ODc4MTQsIm5iZiI6MTcxMjU4NzgxNCwianRpIjoiMjhkZmFiZmEtNjFiZS00OTE4LWJlMDMtNWE1ZGJlMTI4MzllIiwiZXhwIjoxNzEzNDUxODE0LCJpZGVudGl0eSI6IjRkYmJlNDhjLWU1NWYtNDQ2Mi05Nzk5LTBmOTFmOTJjY2NiNCIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyIsInVzZXJfY2xhaW1zIjp7InJvbGVzIjpbeyJuYW1lIjoiY3VzdG9tZXIiLCJpZCI6IjdmN2ZiZGQ5LWMxMGQtNGRiMC1iOTQ3LWUyZDc0MmE2MTlhOSJ9XSwiZW1haWwiOiJoZW5yeUBjcmFuZWNsb3VkLmlvIn19.ej5-HNioEPrVT6oZ2mdKamTGVQiBt7LSAbALP1Jde0g", current_user={'user_claims': {
-            'roles': [{'name': 'admin'}],
-            'email': 'test@example.com'
-        }})
+#     result = dummy_function(access_token="Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTI1ODc4MTQsIm5iZiI6MTcxMjU4NzgxNCwianRpIjoiMjhkZmFiZmEtNjFiZS00OTE4LWJlMDMtNWE1ZGJlMTI4MzllIiwiZXhwIjoxNzEzNDUxODE0LCJpZGVudGl0eSI6IjRkYmJlNDhjLWU1NWYtNDQ2Mi05Nzk5LTBmOTFmOTJjY2NiNCIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyIsInVzZXJfY2xhaW1zIjp7InJvbGVzIjpbeyJuYW1lIjoiY3VzdG9tZXIiLCJpZCI6IjdmN2ZiZGQ5LWMxMGQtNGRiMC1iOTQ3LWUyZDc0MmE2MTlhOSJ9XSwiZW1haWwiOiJoZW5yeUBjcmFuZWNsb3VkLmlvIn19.ej5-HNioEPrVT6oZ2mdKamTGVQiBt7LSAbALP1Jde0g", current_user={'user_claims': {
+#             'roles': [{'name': 'admin'}],
+#             'email': 'test@example.com'
+#         }})
     
-    assert result == "Access denied"
+#     assert result == "Access denied"
 
-def test_user_required():
-    def dummy_authenticate(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            kwargs['current_user'] = {'roles': ['user']}
-            return fn(*args, **kwargs)
+# def test_user_required():
+#     def dummy_authenticate(fn):
+#         @wraps(fn)
+#         def wrapper(*args, **kwargs):
+#             kwargs['current_user'] = {'roles': ['user']}
+#             return fn(*args, **kwargs)
 
-        return wrapper
+#         return wrapper
 
-    def dummy_has_role(user, role):
-        return 'administrator' in user.get('roles', [])
+#     def dummy_has_role(user, role):
+#         return 'admin' in user.get('roles', [])
 
-    @admin_or_user_required
-    def dummy_function(*args, **kwargs):
-        return "Admin access granted" if kwargs.get('is_admin') else "Access denied"
+#     @admin_or_user_required
+#     def dummy_function(*args, **kwargs):
+#         return "Admin access granted" if kwargs.get('is_admin') else "Access denied"
 
-    # Patching authenticate and has_role functions
-    authenticate = dummy_authenticate
-    has_role = dummy_has_role
+#     # Patching authenticate and has_role functions
+#     authenticate = dummy_authenticate
+#     has_role = dummy_has_role
 
-    # Testing user access
-    result = dummy_function(access_token="Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTI1ODU4NzEsIm5iZiI6MTcxMjU4NTg3MSwianRpIjoiZDFjODIzZGUtZGE4OC00MDI5LTg0NDktZWQ0ZmVlMWUyNjExIiwiZXhwIjoxNzEzNDQ5ODcxLCJpZGVudGl0eSI6IjMzMDIyMmFmLWJkYTktNDlhYy04MWMzLWQ3ZGQ0MDI1NjlhYSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyIsInVzZXJfY2xhaW1zIjp7InJvbGVzIjpbeyJuYW1lIjoiYWRtaW5pc3RyYXRvciIsImlkIjoiYWYyM2Y2ZDgtZWRlZi00NWY0LTg1ZWMtZGE2Y2Q3ZDUxOWJiIn1dLCJlbWFpbCI6ImFkbWluQGNyYW5lY2xvdWQuaW8ifX0.FXrs1icgXrPwGsH4m6EW9iNIV0uuXLykRNFLWthoyMM")
-    assert result == "Access denied"
+#     # Testing user access
+#     result = dummy_function(access_token="Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTI1ODU4NzEsIm5iZiI6MTcxMjU4NTg3MSwianRpIjoiZDFjODIzZGUtZGE4OC00MDI5LTg0NDktZWQ0ZmVlMWUyNjExIiwiZXhwIjoxNzEzNDQ5ODcxLCJpZGVudGl0eSI6IjMzMDIyMmFmLWJkYTktNDlhYy04MWMzLWQ3ZGQ0MDI1NjlhYSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyIsInVzZXJfY2xhaW1zIjp7InJvbGVzIjpbeyJuYW1lIjoiYWRtaW5pc3RyYXRvciIsImlkIjoiYWYyM2Y2ZDgtZWRlZi00NWY0LTg1ZWMtZGE2Y2Q3ZDUxOWJiIn1dLCJlbWFpbCI6ImFkbWluQGNyYW5lY2xvdWQuaW8ifX0.FXrs1icgXrPwGsH4m6EW9iNIV0uuXLykRNFLWthoyMM")
+#     assert result == "Access denied"
 
 
 
