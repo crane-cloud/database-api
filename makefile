@@ -49,7 +49,6 @@ build-test-image: ## Build test docker image
 test:build-test-image ## Run tests
 	@ ${INFO} "Running tests"
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) exec database-api poetry run pytest --cov=app
-	@ coveralls
 	@ ${INFO} "Tests complete"
 	
 
