@@ -2,6 +2,7 @@ import requests
 from functools import wraps
 import datetime
 from config import settings
+from threading import Thread
 
 DEFAULT_DATA = {
     "creation_date": str(datetime.datetime.now()),
@@ -24,7 +25,6 @@ def send_log_message(data):
 
 
 def log_response(func):
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
@@ -40,6 +40,6 @@ def log_response(func):
 
 
 def send_async_log_message(data):
-    from threading import Thread
+    
     thread = Thread(target=send_log_message, args=(data,))
     thread.start()
