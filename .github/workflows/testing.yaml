@@ -22,10 +22,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install coveralls
+      - name: Install dependencies with Poetry
         run: |
-          python -m pip install coveralls
-          
+          poetry install
+
       - name: Test with pytest
         run: |
           make test
