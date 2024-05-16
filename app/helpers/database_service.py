@@ -369,11 +369,9 @@ class MysqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
 
-            cursor.execute(f"REVOKE ALL PRIVILEGES ON {
-                           db_name}.* FROM {db_user_name}")
+            cursor.execute(f"REVOKE ALL PRIVILEGES ON {db_name}.* FROM {db_user_name}")
 
-            cursor.execute(f"GRANT SELECT, DELETE ON {
-                           db_name}.* TO {db_user_name}")
+            cursor.execute(f"GRANT SELECT, DELETE ON {db_name}.* TO {db_user_name}")
 
             return True
         except self.Error as e:
@@ -391,8 +389,7 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"GRANT ALL PRIVILEGES ON {
-                           db_name}.* TO {db_user_name}")
+            cursor.execute(f"GRANT ALL PRIVILEGES ON {db_name}.* TO {db_user_name}")
             return True
         except self.Error as e:
             print(e)
@@ -410,8 +407,7 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{
-                           db_user_pw}'ACCOUNT LOCK")
+            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT LOCK")
 
             return True
         except self.Error:
@@ -430,8 +426,7 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{
-                           db_user_pw}'ACCOUNT UNLOCK")
+            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT UNLOCK")
 
             return True
         except self.Error:
@@ -729,8 +724,7 @@ class PostgresqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {
-                           db_name} FROM {db_user_name}")
+            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {db_name} FROM {db_user_name}")
             cursor.execute(
                 f"REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM {db_user_name}")
             cursor.execute(
@@ -751,8 +745,7 @@ class PostgresqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {
-                           db_name} TO {db_user_name}")
+            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {db_name} TO {db_user_name}")
             cursor.execute(
                 f"GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {db_user_name}")
             cursor.execute(f"GRANT USAGE ON SCHEMA public TO {db_user_name}")
