@@ -7,6 +7,7 @@ import string
 from types import SimpleNamespace
 from config import settings
 
+
 def generate_db_credentials():
     punctuation = r"""#%+,-<=>^_"""
     name = ''.join((secrets.choice(string.ascii_letters)
@@ -367,10 +368,12 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            
-            cursor.execute(f"REVOKE ALL PRIVILEGES ON {db_name}.* FROM {db_user_name}")
-            
-            cursor.execute(f"GRANT SELECT, DELETE ON {db_name}.* TO {db_user_name}")
+
+            cursor.execute(f"REVOKE ALL PRIVILEGES ON {
+                           db_name}.* FROM {db_user_name}")
+
+            cursor.execute(f"GRANT SELECT, DELETE ON {
+                           db_name}.* TO {db_user_name}")
 
             return True
         except self.Error as e:
@@ -388,7 +391,8 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"GRANT ALL PRIVILEGES ON {db_name}.* TO {db_user_name}")
+            cursor.execute(f"GRANT ALL PRIVILEGES ON {
+                           db_name}.* TO {db_user_name}")
             return True
         except self.Error as e:
             print(e)
@@ -406,8 +410,9 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT LOCK")
-            
+            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{
+                           db_user_pw}'ACCOUNT LOCK")
+
             return True
         except self.Error:
             return False
@@ -425,8 +430,9 @@ class MysqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT UNLOCK")
-            
+            cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{
+                           db_user_pw}'ACCOUNT UNLOCK")
+
             return True
         except self.Error:
             return False
@@ -715,7 +721,7 @@ class PostgresqlDbService(DatabaseService):
 
             cursor.close()
             connection.close()
-            
+
     def disable_user_access(self, db_name, db_user_name):
         """Grants read and delete access to the specified user, revoking write and update privileges."""
         try:
@@ -723,9 +729,12 @@ class PostgresqlDbService(DatabaseService):
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {db_name} FROM {db_user_name}")
-            cursor.execute(f"REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM {db_user_name}")
-            cursor.execute(f"REVOKE USAGE ON SCHEMA public FROM {db_user_name}")
+            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {
+                           db_name} FROM {db_user_name}")
+            cursor.execute(
+                f"REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM {db_user_name}")
+            cursor.execute(
+                f"REVOKE USAGE ON SCHEMA public FROM {db_user_name}")
             return True
         except self.Error as e:
             print(e)
@@ -735,15 +744,17 @@ class PostgresqlDbService(DatabaseService):
                 return False
             cursor.close()
             connection.close()
-            
+
     def enable_user_write_access(self, db_name, db_user_name):
         try:
             connection = self.create_connection(db_name=db_name)
             if not connection:
                 return False
             cursor = connection.cursor()
-            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {db_name} TO {db_user_name}")
-            cursor.execute(f"GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {db_user_name}")
+            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {
+                           db_name} TO {db_user_name}")
+            cursor.execute(
+                f"GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {db_user_name}")
             cursor.execute(f"GRANT USAGE ON SCHEMA public TO {db_user_name}")
             return True
         except self.Error as e:
@@ -755,8 +766,8 @@ class PostgresqlDbService(DatabaseService):
             cursor.close()
             connection.close()
 
-
     # disable user database log in
+
     def disable_user_log_in(self, db_user_name):
         try:
             connection = self.create_connection()
@@ -764,7 +775,7 @@ class PostgresqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} NOLOGIN")
-            
+
             return True
         except self.Error as e:
             print(e)
@@ -783,7 +794,7 @@ class PostgresqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} WITH LOGIN")
-            
+
             return True
         except self.Error as e:
             print(e)

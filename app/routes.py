@@ -7,7 +7,7 @@ from app.helpers.database_session import get_db
 from typing import Optional
 from fastapi.responses import JSONResponse
 from app.helpers.database_service import generate_db_credentials, MysqlDbService
-from app.helpers.database_flavor import get_db_flavour, database_flavours, graph_filter_datat, disable_database, enable_database, undo_database_revoke, revoke_database, failed_database_connection, database_not_found, save_to_database
+from app.helpers.database_flavor import disable_database_flavour, enable_database_flavour, get_db_flavour, database_flavours, graph_filter_datat, undo_database_revoke, revoke_database, failed_database_connection, database_not_found, save_to_database
 from app.helpers.logger import send_async_log_message
 from typing import Annotated
 from datetime import datetime
@@ -16,6 +16,7 @@ from app.helpers.decorators import authenticate
 from app.helpers.auth import get_current_user, check_authentication
 
 router = APIRouter()
+
 
 @router.get("/databases/stats")
 def fetch_database_stats(access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
@@ -38,7 +39,7 @@ def fetch_database_stats(access_token: Annotated[str | None, Header()] = None, d
                 dbs_stats_per_flavour=dbs_per_flavour)
 
     return SimpleNamespace(status_code=200,
-                data=dict(databases=data))
+                           data=dict(databases=data))
 
 
 @router.get("/databases")
@@ -49,9 +50,9 @@ def get_all_databases(access_token: Annotated[str | None, Header()] = None, db: 
     if current_user.role == "administrator":
         databases = db.query(Database).all()
     else:
-        databases = db.query(Database).filter(Database.owner_id == current_user.id).all()
-    return SimpleNamespace(status_code=200,data={"databases":databases})
-
+        databases = db.query(Database).filter(
+            Database.owner_id == current_user.id).all()
+    return SimpleNamespace(status_code=200, data={"databases": databases})
 
 
 @router.post("/databases")
@@ -59,22 +60,24 @@ def create_database(database: DatabaseFlavor, access_token: Annotated[str | None
 
     credentials = generate_db_credentials()
     db_flavor = get_db_flavour(database.database_flavour_name)
+
     current_user = get_current_user(access_token)
     check_authentication(current_user)
-  
-    existing_name = db.query(Database).filter(Database.name == credentials.name).first()
+
+    existing_name = db.query(Database).filter(
+        Database.name == credentials.name).first()
     if existing_name:
         log_data = {
-        "operation": "Create",
-        "status": "Failed",
-        "user_id": current_user.user_id,
-        "model":"Database",
-        "description":"Database with this name already exists"
+            "operation": "Create",
+            "status": "Failed",
+            "user_id": current_user.id,
+            "model": "Database",
+            "description": "Database with this name already exists"
         }
         send_async_log_message(log_data)
-        raise HTTPException(status_code=400, message="Database with this name already exists")
-  
-    
+        raise HTTPException(
+            status_code=400, message="Database with this name already exists")
+
     new_database_info = dict(
         user=credentials.user,
         password=credentials.password,
@@ -82,7 +85,8 @@ def create_database(database: DatabaseFlavor, access_token: Annotated[str | None
         database_flavour_name=database.database_flavour_name,
         host=db_flavor['host'],
         port=db_flavor['port'],
-        owner_id= current_user.user_id
+        owner_id=current_user.id,
+        email=current_user.email
     )
 
     try:
@@ -130,14 +134,15 @@ def create_database(database: DatabaseFlavor, access_token: Annotated[str | None
         "description": "Database successfully created."
     }
     send_async_log_message(log_data)
-    return {
-        "status_code": 201,
-        "data": database
-    }
+
+    return SimpleNamespace(status_code=201, data={"database": database})
 
 
 @router.get("/databases/{database_id}")
 def single_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token)
+    check_authentication(current_user)
+
     user_database = db.query(Database).filter(
         Database.id == database_id).first()
     if not user_database:
@@ -182,22 +187,27 @@ def single_database(database_id: str, access_token: Annotated[str | None, Header
         "default_storage_kb": database_service.get_database_size(
             user=user_database.user, password=user_database.password, db_name=user_database.name)
     }
-    return database_dict
+
+    return SimpleNamespace(status_code=200, data={"database": database_dict})
 
 
 @router.get("/databases/{database_id}/password")
 def get_database_password(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token)
+    check_authentication(current_user)
+
     db_exists = db.query(Database).filter(Database.id == database_id).first()
     if not db_exists:
         raise HTTPException(
             status_code=404, detail=f"Database with ID {database_id} not found")
-    return {"status_code": 200, "data":db_exists.password}
+    return SimpleNamespace(status_code=200, data={"database": {"password": db_exists.password}})
 
 
 @router.post("/databases/{database_id}/enable")
 def enable_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
     current_user = get_current_user(access_token)
     check_authentication(current_user)
+
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
         database_not_found(current_user, "Enable", database.id)
@@ -206,7 +216,7 @@ def enable_database(database_id: str, access_token: Annotated[str | None, Header
             raise HTTPException(
                 status_code=409, detail="Database is already enabled.")
 
-        enabled_database = enable_database(database, db)
+        enabled_database = enable_database_flavour(database, db)
         if type(enabled_database) == SimpleNamespace:
             status_code = enabled_database.status_code if enabled_database.status_code else 500
             log_data = {
@@ -228,7 +238,7 @@ def enable_database(database_id: str, access_token: Annotated[str | None, Header
             "description": f"Database: {database.id} is successfully enabled."
         }
         send_async_log_message(log_data)
-        return {"status_code": 200,"message": "Database enabled successfully"}
+        return {"status_code": 200, "message": "Database enabled successfully"}
     else:
         if not database.disabled:
             raise HTTPException(
@@ -246,7 +256,7 @@ def enable_database(database_id: str, access_token: Annotated[str | None, Header
             send_async_log_message(log_data)
             return {"message": f"You are not authorised to enable Database with id {database_id}, please contact an admin", "status_code": 403}
 
-        enabled_database = enable_database(database, db)
+        enabled_database = enable_database_flavour(database, db)
         if type(enabled_database) == SimpleNamespace:
             status_code = enabled_database.status_code if enabled_database.status_code else 500
             log_data = {
@@ -288,7 +298,7 @@ def disable_database(database_id: str, access_token: Annotated[str | None, Heade
             raise HTTPException(
                 status_code=404, detail="Databases is already disabled.")
 
-        disbled_database = disable_database(database, db, True)
+        disbled_database = disable_database_flavour(database, db, True)
         if type(disbled_database) == SimpleNamespace:
             status_code = disbled_database.status_code if disbled_database.status_code else 500
             log_data = {
@@ -310,7 +320,7 @@ def disable_database(database_id: str, access_token: Annotated[str | None, Heade
             "description": f"Database: {database.id} is successfully disabled."
         }
         send_async_log_message(log_data)
-        return {"message": "Database disabled successfully", "status_code":200}
+        return {"message": "Database disabled successfully", "status_code": 200}
     else:
         if database.disabled:
             raise HTTPException(
@@ -323,12 +333,12 @@ def disable_database(database_id: str, access_token: Annotated[str | None, Heade
                 "user_id": current_user.id,
                 "user_email": current_user.email,
                 "model": "Database",
-                "description": f"You are not authorised to disable Database: {database.id}"
+                "description": f"You are not authorised to disable Database: {database_id}"
             }
             send_async_log_message(log_data)
-            return {"message":'Database with id {database_id} is disabled, please contact an admin', "status_code":403}
+            return {"message": 'Database with id {database_id} is disabled, please contact an admin', "status_code": 403}
 
-        disbled_database = disable_database(database, db, False)
+        disbled_database = disable_database_flavour(database, db, False)
         if type(disbled_database) == SimpleNamespace:
             status_code = disbled_database.status_code if disbled_database.status_code else 500
             log_data = {
@@ -337,51 +347,55 @@ def disable_database(database_id: str, access_token: Annotated[str | None, Heade
                 "user_id": current_user.id,
                 "user_email": current_user.email,
                 "model": "Database",
-                "description": f"Database: {database.id} is {disbled_database.message}."
+                "description": f"Database: {database_id} is {disbled_database.message}."
             }
             send_async_log_message(log_data)
-            return dict(status_code=status_code, message=disbled_database.message), status_code
+            return dict(status_code=status_code, message=disbled_database.message)
         log_data = {
             "operation": "DATABASE DISABLE",
             "status": "Success",
             "user_id": current_user.id,
             "user_email": current_user.email,
             "model": "Database",
-            "description": f"Database: {database.id} is successfully disabled."
+            "description": f"Database: {database_id} is successfully disabled."
         }
         send_async_log_message(log_data)
-        return {"message": "Database disabled successfully", "status_code":200}
+        return {"status_code": 200, "message": "Database disabled successfully"}
 
 
 @router.delete("/databases/{database_id}")
-def delete_database(database_id:str, access_token:Annotated[str | None, Header()] = None , db: Session = Depends(get_db)):
-  current_user = get_current_user(access_token)
-  database = db.query(Database).filter(Database.id == database_id).first()
-  if database is None:
+def delete_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token)
+    check_authentication(current_user)
+
+    database = db.query(Database).filter(Database.id == database_id).first()
+    if database is None:
+        log_data = {
+            "operation": "DATABASE DELETE",
+            "status": "Failed",
+            "user_id": current_user.id,
+            "description": f"Failed to get Database with ID: {database_id}"
+        }
+        send_async_log_message(log_data)
+        return {"status_code": 404, "message": "Database Not Found"}
+
+    db.delete(database)
+    save_to_database(db)
     log_data = {
-      "operation": "DATABASE DELETE",
-      "status": "Failed",
-      "user_id": current_user.user_id,
-      "description":f"Failed to get Database with ID: {database.id}"
+        "operation": "DATABASE DELETE",
+        "status": "Success",
+        "user_id": current_user.id,
+        "description": f"Database: {database.id} is successfully deleted."
     }
     send_async_log_message(log_data)
-    raise HTTPException(status_code=404, message="Databases not found")
-  db.delete(database)
-  save_to_database(db)
-  log_data = {
-    "operation": "DATABASE DELETE",
-    "status": "Success",
-    "user_id": current_user.user_id,
-    "description":f"Database: {database.id} is successfully deleted."
-  }
-  send_async_log_message(log_data)
-  return {"message": "Database deleted successfully", "status_code":200}
+    return {"status_code": 200, "message": "Database deleted successfully"}
 
 
 @router.post("/databases/{database_id}/reset")
-@authenticate
 def reset_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
     current_user = get_current_user(access_token)
+    check_authentication(current_user)
+
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
         database_not_found(current_user, "Enable", database.id)
@@ -436,10 +450,10 @@ def reset_database(database_id: str, access_token: Annotated[str | None, Header(
 
 
 @router.post("/databases/{database_id}/reset_password")
-@authenticate
 def password_reset_database(database_id: str, field_update: PasswordUpdate, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
     current_user = get_current_user(access_token)
     check_authentication(current_user)
+
     database = db.query(Database).filter(Database.id == database_id).first()
     if not database:
         database_not_found(current_user, "RESET PASSWORD", database.id)
@@ -526,7 +540,7 @@ def allocate_storage(database_id: str, additional_storage: int, access_token: An
 
     database.allocated_size_kb += additional_storage
     save_to_database(db)
-    return {"message": f"Additional {additional_storage} bytes of storage allocated to the database", "status_code":200}
+    return {"message": f"Additional {additional_storage} bytes of storage allocated to the database", "status_code": 200}
 
 
 @router.get("/databases/graph")
@@ -558,7 +572,7 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
             "description": f"Failed due to: {e}"
         }
         send_async_log_message(log_data)
-        return JSONResponse(data={ 'message': str(e)}, status_code=400)
+        return JSONResponse(data={'message': str(e)}, status_code=400)
 
     valid_flavour = None
 
@@ -574,7 +588,7 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
                 "description": "Wrong database flavour name"
             }
             send_async_log_message(log_data)
-            return JSONResponse(data={ 'message': 'Not a valid database flavour use mysql or postgres'}, status_code=401)
+            return JSONResponse(data={'message': 'Not a valid database flavour use mysql or postgres'}, status_code=401)
 
     if set_by == 'month':
         date_list = func.generate_series(cast(start_date, Date), cast(
@@ -625,87 +639,88 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
 
     return {"status_code": 200,  'data': {'metadata': metadata, 'graph_data': db_info}}
 
-@router.post("/databases/{database_id}/revoke_write_access")
-def revoke_write_access(database_id:str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-  current_user = get_current_user(access_token)
 
-  database = db.query(Database).filter(Database.id == database_id).first()
-  if database is None:
+@router.post("/databases/{database_id}/revoke_write_access")
+def revoke_write_access(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token)
+    check_authentication(current_user)
+
+    database = db.query(Database).filter(Database.id == database_id).first()
+    if database is None:
+        # log_data = {
+        #   "operation": "DATABASE REVOKE",
+        #   "status": "Failed",
+        #   # "user_id": current_user.user_id,
+        #   # "user_email": user_email,
+        #   "model":"Database",
+        #   "description":f"Failed to get Database with ID: {database.id}"
+        # }
+        # send_async_log_message(log_data)
+        raise HTTPException(status_code=404, detail="Databases not found")
+
+    revoked_db = revoke_database(database)
+    if type(revoked_db) == SimpleNamespace:
+        status_code = revoked_db.status_code if revoked_db.status_code else 500
+        # log_data = {
+        #   "operation": "DATABASE ENABLE",
+        #   "status": "Failed",
+        #   "user_id": current_user.user_id,
+        #   "user_email": user_email,
+        #   "model":"Database",
+        #   "description":f"Database: {database.id} is {disbled_database.message}."
+        # }
+        # send_async_log_message(log_data)
+        return dict(status_code=status_code, message=revoked_db.message)
     # log_data = {
     #   "operation": "DATABASE REVOKE",
-    #   "status": "Failed",
-    #   # "user_id": current_user.user_id,
-    #   # "user_email": user_email,
+    #   "status": "Success",
+    #   "user_id": user_id,
+    #   "user_email": user_email,
     #   "model":"Database",
-    #   "description":f"Failed to get Database with ID: {database.id}"
+    #   "description":f"Database: {database.id} is successfully revoked."
     # }
     # send_async_log_message(log_data)
-    raise HTTPException(status_code=404, detail="Databases not found")
-  
-  revoked_db = revoke_database(database)
-  if type(revoked_db) == SimpleNamespace:
-      status_code = revoked_db.status_code if revoked_db.status_code else 500
-      # log_data = {
-      #   "operation": "DATABASE ENABLE",
-      #   "status": "Failed",
-      #   "user_id": current_user.user_id,
-      #   "user_email": user_email,
-      #   "model":"Database",
-      #   "description":f"Database: {database.id} is {disbled_database.message}."
-      # }
-      # send_async_log_message(log_data)
-      return dict(status_code=status_code, message=revoked_db.message)
-  # log_data = {
-  #   "operation": "DATABASE REVOKE",
-  #   "status": "Success",
-  #   "user_id": user_id,
-  #   "user_email": user_email,
-  #   "model":"Database",
-  #   "description":f"Database: {database.id} is successfully revoked."
-  # }
-  # send_async_log_message(log_data)
-  return {"message": "Database revoked successfully"}
+    return {"message": "Database revoked successfully"}
+
 
 @router.post("/databases/{database_id}/undo_database_revoke")
-def undo_database_revoke(database_id:str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-  # print("tutuse")
-  # print(access_token)
-  # print("tetunaba")
-  current_user = get_current_user(access_token)
+def undo_database_access_revoke(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token)
+    check_authentication(current_user)
 
-  database = db.query(Database).filter(Database.id == database_id).first()
-  if database is None:
+    database = db.query(Database).filter(Database.id == database_id).first()
+    if database is None:
+        # log_data = {
+        #   "operation": "DATABASE UNREVOKE",
+        #   "status": "Failed",
+        #   "user_id": current_user.user_id,
+        #   "user_email": user_email,
+        #   "model":"Database",
+        #   "description":f"Failed to get Database with ID: {database.id}"
+        # }
+        # send_async_log_message(log_data)
+        raise HTTPException(status_code=404, detail="Databases not found")
+
+    revoked_db = undo_database_revoke(database)
+    if type(revoked_db) == SimpleNamespace:
+        status_code = revoked_db.status_code if revoked_db.status_code else 500
+        # log_data = {
+        #   "operation": "DATABASE UNREVOKE",
+        #   "status": "Failed",
+        #   "user_id": current_user.user_id,
+        #   "user_email": user_email,
+        #   "model":"Database",
+        #   "description":f"Database: {database.id} is {revoked_db.message}."
+        # }
+        # send_async_log_message(log_data)
+        return dict(status_code=status_code, message=revoked_db.message)
     # log_data = {
     #   "operation": "DATABASE UNREVOKE",
-    #   "status": "Failed",
+    #   "status": "Success",
     #   "user_id": current_user.user_id,
     #   "user_email": user_email,
     #   "model":"Database",
-    #   "description":f"Failed to get Database with ID: {database.id}"
+    #   "description":f"Database: {database.id} is unrevoked successfully."
     # }
     # send_async_log_message(log_data)
-    raise HTTPException(status_code=404, detail="Databases not found")
-  
-  revoked_db = undo_database_revoke(database)
-  if type(revoked_db) == SimpleNamespace:
-      status_code = revoked_db.status_code if revoked_db.status_code else 500
-      # log_data = {
-      #   "operation": "DATABASE UNREVOKE",
-      #   "status": "Failed",
-      #   "user_id": current_user.user_id,
-      #   "user_email": user_email,
-      #   "model":"Database",
-      #   "description":f"Database: {database.id} is {revoked_db.message}."
-      # }
-      # send_async_log_message(log_data)
-      return dict(status_code=status_code, message=revoked_db.message)
-  # log_data = {
-  #   "operation": "DATABASE UNREVOKE",
-  #   "status": "Success",
-  #   "user_id": current_user.user_id,
-  #   "user_email": user_email,
-  #   "model":"Database",
-  #   "description":f"Database: {database.id} is unrevoked successfully."
-  # }
-  # send_async_log_message(log_data)
-  return {"message": "Database unrevoked successfully"}
+    return {"message": "Database unrevoked successfully"}

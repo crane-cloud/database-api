@@ -11,18 +11,21 @@ class DatabaseSchema(BaseModel):
     owner_id: str
     email: str
     port: Optional[int]
-    database_flavour_name: str 
+    database_flavour_name: str
     deleted: bool = False
     disabled: bool = False
     admin_disabled: bool = False
 
+
 class DatabaseFlavor(BaseModel):
-    
+
     database_flavour_name: Optional[str]
 
+
 class PasswordUpdate(BaseModel):
-    
+
     password: str
+
 
 class UserGraphSchema(BaseModel):
     start: date
