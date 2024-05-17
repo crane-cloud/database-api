@@ -6,7 +6,7 @@ help:  ## Display this help
 
 build-image: ## Build docker image
 	@ ${INFO} "Building required docker images"
-	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) build database-api
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) build database-api celery_worker flower
 	@ ${INFO} "Image succesfully built"
 	@ echo " "
 

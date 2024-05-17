@@ -1,11 +1,18 @@
 version: "3.8"
 services:
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
   database-api:
     restart: always
     build:
       context: .
       dockerfile: Dockerfile
     container_name: database-api
+    command: poetry run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
@@ -21,6 +28,8 @@ services:
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
       TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db_test}
       JWT_SALT: ${JWT_SALT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
@@ -36,9 +45,26 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: cranecloud_db
     ports:
-      - "4200:5432"
+      - "${DATABASE_SERVICE_PORT:-4200}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: poetry run celery -A main.celery worker --pool=solo --loglevel=info -B
+    environment:
+      DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - database-api
+    
 
 volumes:
   db-data:

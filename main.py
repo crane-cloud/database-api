@@ -7,6 +7,12 @@ from pydantic import ValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import router
 
+from celery import Celery
+from celery.schedules import crontab
+from app.tasks import update_celery
+# from app.tasks.automatic_emails import test_task
+# from app.tasks.celeryconfig import create_celery_app
+
 
 def create_app() -> FastAPI:
 	# load the environment variables
@@ -41,3 +47,9 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+celery = update_celery(app)
+
+
+
+
