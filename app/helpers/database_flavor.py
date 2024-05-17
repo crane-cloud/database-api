@@ -10,9 +10,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.helpers.logger import send_log_message, send_async_log_message
 
 graph_filter_datat = {
-  'start': '2018-01-01',
-  'end': datetime.now().strftime('%Y-%m-%d'),
-  'set_by': 'month'
+    'start': '2018-01-01',
+    'end': datetime.now().strftime('%Y-%m-%d'),
+    'set_by': 'month'
 }
 
 db_flavors = {
@@ -62,7 +62,8 @@ def get_db_flavour(flavour_name=None):
 def get_all_db_flavours():
     return database_flavours
 
-def disable_database(database: Database, db: Session, is_admin=False):
+
+def disable_database_flavour(database: Database, db: Session, is_admin=False):
     if database.disabled:
         return SimpleNamespace(
             message="Database is already disabled",
@@ -84,10 +85,10 @@ def disable_database(database: Database, db: Session, is_admin=False):
 
         disable_database = database_service.disable_user_log_in(
             database.user)
-        
-    else :
+
+    else:
         disable_database = database_service.disable_user_log_in(
-            database.user , database.password)
+            database.user, database.password)
 
     if not disable_database:
         return SimpleNamespace(
@@ -107,7 +108,7 @@ def disable_database(database: Database, db: Session, is_admin=False):
         )
 
 
-def enable_database(database: Database, db: Session):
+def enable_database_flavour(database: Database, db: Session):
     if not database.disabled:
         return SimpleNamespace(
             message="Database is not disabled",
@@ -130,9 +131,9 @@ def enable_database(database: Database, db: Session):
     if (db_flavour['name'] == 'postgres'):
         enable_database = database_service.enable_user_log_in(
             database.user)
-    else :
+    else:
         enable_database = database_service.enable_user_log_in(
-            database.user , database.password)
+            database.user, database.password)
 
     if not enable_database:
         return SimpleNamespace(
@@ -150,6 +151,7 @@ def enable_database(database: Database, db: Session):
             status_code=500
         )
 
+
 def revoke_database(database: Database):
     # get connection
     db_flavour = get_db_flavour(database.database_flavour_name)
@@ -165,7 +167,7 @@ def revoke_database(database: Database):
     if (db_flavour['name'] == 'postgres'):
         revoke_database = database_service.disable_user_access(
             database.name, database.user)
-    else :
+    else:
         revoke_database = database_service.disable_user_access(
             database.name, database.user)
 
@@ -174,8 +176,9 @@ def revoke_database(database: Database):
             message="Unable to revoke database",
             status_code=500
         )
-    
+
     return True
+
 
 def undo_database_revoke(database: Database):
     # get connection
@@ -192,7 +195,7 @@ def undo_database_revoke(database: Database):
     if (db_flavour['name'] == 'postgres'):
         revoke_database = database_service.enable_user_write_access(
             database.name, database.user)
-    else :
+    else:
         revoke_database = database_service.enable_user_write_access(
             database.name, database.user)
 
@@ -201,9 +204,10 @@ def undo_database_revoke(database: Database):
             message="Unable to revoke database",
             status_code=500
         )
-    
+
     return True
-    
+
+
 def failed_database_connection(current_user, operation):
     log_data = {
         "operation": operation,
@@ -219,20 +223,23 @@ def failed_database_connection(current_user, operation):
         message="Failed to connect to the database service"
     )
 
+
 def database_not_found(current_user, operation, database_id):
     log_data = {
         "operation": operation,
         "status": "Failed",
         "user_id": current_user["id"],
-        "model":"Database",
-        "description":f"Failed to get Database with ID: {database_id}"
+        "model": "Database",
+        "description": f"Failed to get Database with ID: {database_id}"
     }
     send_async_log_message(log_data)
     raise HTTPException(status_code=404, detail="Database not found")
+
 
 def save_to_database(db):
     try:
         db.commit()
     except SQLAlchemyError as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Failed to save to the database") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to save to the database") from e
