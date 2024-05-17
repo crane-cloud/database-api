@@ -1,4 +1,5 @@
 from jose import jwt
+from jwt import DecodeError, ExpiredSignatureError, InvalidTokenError
 from config import settings
 from types import SimpleNamespace
 from fastapi import HTTPException
@@ -10,20 +11,27 @@ def has_role(role_list, role_name) -> bool:
             return True
     return False
 
+
 def get_current_user(access_token):
     try:
         token = access_token.split(' ')[1]
         payload = jwt.decode(token, settings.JWT_SALT, algorithms=['HS256'])
 
-        user_claims = payload['user_claims']
-        role = user_claims['roles'][0]['name']
-        user_id = payload['identity']
-        email = user_claims['email']
-        return SimpleNamespace(
-            role=role, id=user_id, email=email
-        )
+        user_claims = payload.get('user_claims', {})
+        role = user_claims.get('roles', [{}])[0].get('name')
+        user_id = payload.get('identity')
+        email = user_claims.get('email')
+
+        return SimpleNamespace(role=role, id=user_id, email=email)
+    except (IndexError, KeyError) as e:
+        print(f"Key or Index error: {e}")
+    except (InvalidTokenError, DecodeError, ExpiredSignatureError) as e:
+        print(f"Token error: {e}")
     except Exception as e:
-        return SimpleNamespace(role=None, id=None, email=None)
+        print(f"An unexpected error occurred: {e}")
+
+    return SimpleNamespace(role=None, id=None, email=None)
+
 
 def check_authentication(current_user):
     if not current_user:
