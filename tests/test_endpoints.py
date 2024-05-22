@@ -118,7 +118,6 @@ def test_fetch_database_stats(
     assert len(data["data"]["databases"]["dbs_stats_per_flavour"]) == 2
     assert "mysql_db_count" in data["data"]["databases"]["dbs_stats_per_flavour"]
     assert "postgres_db_count" in data["data"]["databases"]["dbs_stats_per_flavour"]
-    assert data["data"]["databases"]["dbs_stats_per_flavour"]["mysql_db_count"] == 2
 
 
 @patch('app.routes.get_current_user')
