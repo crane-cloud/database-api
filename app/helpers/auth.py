@@ -12,25 +12,27 @@ def has_role(role_list, role_name) -> bool:
     return False
 
 
-def get_current_user(access_token):
+def get_current_user(access_token: str):
     try:
-        token = access_token.split(' ')[1]
-        payload = jwt.decode(token, settings.JWT_SALT, algorithms=['HS256'])
+        payload = jwt.decode(
+            access_token, settings.JWT_SALT, algorithms=['HS256'])
 
         user_claims = payload.get('user_claims', {})
-        role = user_claims.get('roles', [{}])[0].get('name')
+        roles = user_claims.get('roles', [])
+
+        role = roles[0].get('name') if roles and isinstance(
+            roles, list) else None
         user_id = payload.get('identity')
         email = user_claims.get('email')
 
         return SimpleNamespace(role=role, id=user_id, email=email)
-    except (IndexError, KeyError) as e:
-        print(f"Key or Index error: {e}")
+
     except (InvalidTokenError, DecodeError, ExpiredSignatureError) as e:
         print(f"Token error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-
-    return SimpleNamespace(role=None, id=None, email=None)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 def check_authentication(current_user):
