@@ -32,7 +32,7 @@ def get_current_user(access_token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 def check_authentication(current_user):
