@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, Query, security
 from app.schema import (DatabaseSchema, DatabaseFlavor, PasswordUpdate)
 from app.models import Database
 from sqlalchemy.orm import Session
@@ -14,13 +14,15 @@ from datetime import datetime
 from types import SimpleNamespace
 from app.helpers.decorators import authenticate
 from app.helpers.auth import get_current_user, check_authentication
+from fastapi.security import HTTPBearer
 
 router = APIRouter()
+security = HTTPBearer()
 
 
 @router.get("/databases/stats")
-def fetch_database_stats(access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def fetch_database_stats(access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     dbs_per_flavour = {}
@@ -43,8 +45,8 @@ def fetch_database_stats(access_token: Annotated[str | None, Header()] = None, d
 
 
 @router.get("/databases")
-def get_all_databases(access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def get_all_databases(access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     if current_user.role == "administrator":
@@ -52,16 +54,16 @@ def get_all_databases(access_token: Annotated[str | None, Header()] = None, db: 
     else:
         databases = db.query(Database).filter(
             Database.owner_id == current_user.id).all()
-    return SimpleNamespace(status_code=200, data={"databases": databases})
+
+    return {"status_code": 200, "data": {"databases": databases}}
 
 
 @router.post("/databases")
-def create_database(database: DatabaseFlavor, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-
+def create_database(database: DatabaseFlavor, access_token: str = Depends(security), db: Session = Depends(get_db)):
     credentials = generate_db_credentials()
     db_flavor = get_db_flavour(database.database_flavour_name)
 
-    current_user = get_current_user(access_token)
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     existing_name = db.query(Database).filter(
@@ -139,8 +141,8 @@ def create_database(database: DatabaseFlavor, access_token: Annotated[str | None
 
 
 @router.get("/databases/{database_id}")
-def single_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def single_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     user_database = db.query(Database).filter(
@@ -192,8 +194,8 @@ def single_database(database_id: str, access_token: Annotated[str | None, Header
 
 
 @router.get("/databases/{database_id}/password")
-def get_database_password(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def get_database_password(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     db_exists = db.query(Database).filter(Database.id == database_id).first()
@@ -204,8 +206,8 @@ def get_database_password(database_id: str, access_token: Annotated[str | None, 
 
 
 @router.post("/databases/{database_id}/enable")
-def enable_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def enable_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -283,8 +285,8 @@ def enable_database(database_id: str, access_token: Annotated[str | None, Header
 
 
 @router.post("/databases/{database_id}/disable")
-def disable_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def disable_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -364,8 +366,8 @@ def disable_database(database_id: str, access_token: Annotated[str | None, Heade
 
 
 @router.delete("/databases/{database_id}")
-def delete_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def delete_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -392,8 +394,8 @@ def delete_database(database_id: str, access_token: Annotated[str | None, Header
 
 
 @router.post("/databases/{database_id}/reset")
-def reset_database(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def reset_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -450,8 +452,8 @@ def reset_database(database_id: str, access_token: Annotated[str | None, Header(
 
 
 @router.post("/databases/{database_id}/reset_password")
-def password_reset_database(database_id: str, field_update: PasswordUpdate, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def password_reset_database(database_id: str, field_update: PasswordUpdate, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -519,8 +521,8 @@ def password_reset_database(database_id: str, field_update: PasswordUpdate, acce
 
 
 @router.patch("/databases/{database_id}/storage")
-def allocate_storage(database_id: str, additional_storage: int, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def allocate_storage(database_id: str, additional_storage: int, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -544,9 +546,9 @@ def allocate_storage(database_id: str, additional_storage: int, access_token: An
 
 
 @router.get("/databases/graph")
-def database_graph_data(start: Optional[str] = Query(description="Start date format(YYYY-MM-DD)", default=graph_filter_datat['start']), access_token: Annotated[str | None, Header()] = None, end: Optional[str] = Query(description="End date format(YYYY-MM-DD)", default=graph_filter_datat['end']), set_by: Optional[str] = Query(description="Either month or year", default=graph_filter_datat['set_by']), db_flavour: Optional[str] = Query(None, description="Database flavour either mysql or postgres"), db: Session = Depends(get_db)):
+def database_graph_data(start: Optional[str] = Query(description="Start date format(YYYY-MM-DD)", default=graph_filter_datat['start']), access_token: str = Depends(security), end: Optional[str] = Query(description="End date format(YYYY-MM-DD)", default=graph_filter_datat['end']), set_by: Optional[str] = Query(description="Either month or year", default=graph_filter_datat['set_by']), db_flavour: Optional[str] = Query(None, description="Database flavour either mysql or postgres"), db: Session = Depends(get_db)):
     """ Shows databases graph data """
-    current_user = get_current_user(access_token)
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     graph_filter_data = {}
@@ -641,8 +643,8 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
 
 
 @router.post("/databases/{database_id}/revoke_write_access")
-def revoke_write_access(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def revoke_write_access(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
@@ -684,8 +686,8 @@ def revoke_write_access(database_id: str, access_token: Annotated[str | None, He
 
 
 @router.post("/databases/{database_id}/undo_database_revoke")
-def undo_database_access_revoke(database_id: str, access_token: Annotated[str | None, Header()] = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token)
+def undo_database_access_revoke(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
     database = db.query(Database).filter(Database.id == database_id).first()
