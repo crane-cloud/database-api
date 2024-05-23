@@ -55,51 +55,7 @@ def get_all_databases(access_token: str = Depends(security), db: Session = Depen
         databases = db.query(Database).filter(
             Database.owner_id == current_user.id).all()
 
-    database_list = []
-
-    for user_database in databases:
-        try:
-            flavour_name = user_database.database_flavour_name
-            if not flavour_name:
-                flavour_name = "mysql"
-
-            db_flavour = get_db_flavour(flavour_name)
-
-            if not db_flavour:
-                return dict(
-                    status_code=404,
-                    message=f"""Database flavour with name
-                        {user_database.database_flavour_name} is not mysql or postgres."""
-                )
-
-            database_service = db_flavour['class']
-
-            # Get db status
-            database_connection = database_service.create_db_connection(
-                user=user_database.user, password=user_database.password, db_name=user_database.name)
-            db_status = database_connection is not None
-
-        except Exception as e:
-            print(f"Error connecting to database {user_database.name}: {e}")
-            db_status = False
-        finally:
-            if database_connection:
-                if database_service == MysqlDbService():
-                    if database_connection.is_connected():
-                        database_connection.close()
-                    else:
-                        database_connection.close()
-
-        database_dict = {
-            **user_database.__dict__,
-            "db_status": db_status,
-            "default_storage_kb": database_service.get_database_size(
-                user=user_database.user, password=user_database.password, db_name=user_database.name)
-        }
-
-        database_list.append(database_dict)
-
-    return {"status_code": 200, "data": {"databases": database_list}}
+    return {"status_code": 200, "data": {"databases": databases}}
 
 
 @router.post("/databases")
