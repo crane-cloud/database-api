@@ -21,4 +21,4 @@ COPY . /app
 
 EXPOSE 8000
 
-ENTRYPOINT ["sh", "/app/scripts/start.sh"]
+EXPOSE 5555
