@@ -10,9 +10,8 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
     container_name: database-api
-    command: poetry run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
