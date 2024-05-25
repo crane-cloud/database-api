@@ -22,16 +22,20 @@ celery_app = Celery(__name__, broker=redis_url,
 
 def update_celery(app):
     celery_app.conf.worker_concurrency = 12
+    celery_app.conf.timezone='Africa/Nairobi'
+    celery_app.conf.enable_utc=False
     return celery_app
 
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(**kwargs):
+    
     celery_app.add_periodic_task(
-        crontab(hour=19, minute=0),
+        crontab(hour=11, minute=36),
         database_capping.s(),
-        name='send email')
+        name='send capping email')
 
-@celery_app.task(name = "send email")
+
+@celery_app.task(name = "send capping email")
 def database_capping():
     db = SessionLocal()
     

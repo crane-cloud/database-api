@@ -41,7 +41,7 @@ clean: ## Remove all project images and volumes
 build-test-image: ## Build test docker image
 	@ ${INFO} "Building test docker images"
 	@ export FASTAPI_ENV="testing"
-	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) build --build-arg FASTAPI_ENV=testing database-api
+	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) build --build-arg FASTAPI_ENV=testing database-api celery_worker celery_beat celery_flower
 	@ docker compose -f $(DOCKER_DEV_COMPOSE_FILE) up -d database-api celery_worker celery_beat celery_flower
 	@ ${INFO} "Test Image succesfully built"
 	@ echo " "

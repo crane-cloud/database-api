@@ -28,7 +28,7 @@ services:
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
       TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db_test}
       JWT_SALT: ${JWT_SALT}
-      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@cranecloud.io}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
     ports:
       - "${APP_PORT:-8000}:8000"
@@ -57,7 +57,7 @@ services:
     command: poetry run celery -A main.celery worker --loglevel=info 
     environment:
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
-      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@cranecloud.io}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     volumes:
@@ -74,7 +74,7 @@ services:
     command: poetry run celery -A main.celery beat --loglevel=info
     environment:
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
-      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@cranecloud.io}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
@@ -90,7 +90,7 @@ services:
       - 5556:5555
     environment:
       DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database_db:5432/cranecloud_db}
-      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@cranecloud.io}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
