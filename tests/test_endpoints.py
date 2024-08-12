@@ -145,7 +145,7 @@ def test_create_database(
     response = client.post(
         "/databases",
         headers={"Authorization": "Bearer dummy_access_token"},
-        json={"database_flavour_name": "mysql"}
+        json={"database_flavour_name": "mysql","project_id": "09763a33-d1ff-4cb0-9675-1da955d711f3"}
     )
 
     # Validate the response
