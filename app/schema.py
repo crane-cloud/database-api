@@ -9,6 +9,7 @@ class DatabaseSchema(BaseModel):
     user: str
     password: str
     owner_id: str
+    project_id: str
     email: str
     port: Optional[int]
     database_flavour_name: str
@@ -20,6 +21,7 @@ class DatabaseSchema(BaseModel):
 class DatabaseFlavor(BaseModel):
 
     database_flavour_name: Optional[str]
+    project_id: str
 
 
 class PasswordUpdate(BaseModel):
