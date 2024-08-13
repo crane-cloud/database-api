@@ -58,7 +58,7 @@ def get_all_databases(
 
     if current_user.role != "administrator":
         databases = databases.filter(
-            Database.owner_id == current_user.id).all()
+            Database.owner_id == current_user.id)
         
     if project_id:
         databases = databases.filter(Database.project_id == project_id)
