@@ -45,17 +45,29 @@ def fetch_database_stats(access_token: str = Depends(security), db: Session = De
 
 
 @router.get("/databases")
-def get_all_databases(access_token: str = Depends(security), db: Session = Depends(get_db)):
+def get_all_databases(
+        access_token: str = Depends(security),
+        db: Session = Depends(get_db),
+        project_id: str = Query(None, description="Project ID"),
+        database_flavour_name: str = Query(None, description="Database flavour name")
+    ):
     current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
-    if current_user.role == "administrator":
-        databases = db.query(Database).all()
-    else:
-        databases = db.query(Database).filter(
-            Database.owner_id == current_user.id).all()
+    databases = db.query(Database)
 
-    return {"status_code": 200, "data": {"databases": databases}}
+    if current_user.role != "administrator":
+        databases = databases.filter(
+            Database.owner_id == current_user.id)
+        
+    if project_id:
+        databases = databases.filter(Database.project_id == project_id)
+
+    if database_flavour_name:
+        databases = databases.filter(
+            Database.database_flavour_name == database_flavour_name)
+
+    return {"status_code": 200, "data": {"databases": databases.all()}}
 
 
 @router.post("/databases")
@@ -88,6 +100,7 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
         host=db_flavor['host'],
         port=db_flavor['port'],
         owner_id=current_user.id,
+        project_id=database.project_id,
         email=current_user.email
     )
 

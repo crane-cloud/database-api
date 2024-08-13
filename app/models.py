@@ -15,6 +15,7 @@ class Database(Base):
     user = Column(String, nullable=False)
     password = Column(String, nullable=False)
     owner_id = Column(UUID(as_uuid=True), index=True)
+    project_id = Column(UUID(as_uuid=True), index=True)
     date_created = Column(DateTime, default=datetime.datetime.now)
     port = Column(Integer, nullable=True)
     database_flavour_name = Column(String)
