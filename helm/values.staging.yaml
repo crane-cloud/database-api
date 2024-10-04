@@ -35,4 +35,18 @@ environment:
   ADMIN_PSQL_PASSWORD: ${{ ADMIN_PSQL_PASSWORD }}
   ADMIN_PSQL_HOST: ${{ ADMIN_PSQL_HOST }}
   ADMIN_PSQL_PORT: ${{ ADMIN_PSQL_PORT }}
+  MAIL_PASSWORD: ${{ MAIL_PASSWORD }}
+  MAIL_USERNAME: no-reply@cranecloud.io
 
+
+celery:
+  create: true
+  command: 
+    - "poetry"
+    - "run"
+    - "celery"
+    - "-A"
+    - "main.celery"
+    - "worker"
+    - "--loglevel=info"
+  port: 5001

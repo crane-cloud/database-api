@@ -78,7 +78,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      namespace: cranecloud-microservice
+      namespace: cranecloud
       image: cranecloud/database-api
 
     steps:
@@ -88,7 +88,7 @@ jobs:
       # - uses: azure/k8s-set-context@v1
       #   with:
       #     kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
-    
+
       - name: Login (GCP)
         uses: google-github-actions/auth@v2
         with:
@@ -129,6 +129,7 @@ jobs:
           --set environment.ADMIN_PSQL_PASSWORD="${{ secrets.STAGING_ADMIN_PSQL_PASSWORD }}" \
           --set environment.ADMIN_PSQL_HOST="${{ secrets.STAGING_ADMIN_PSQL_HOST }}" \
           --set environment.ADMIN_PSQL_PORT="${{ secrets.STAGING_ADMIN_PSQL_PORT }}" \
+          --set environment.MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
           --timeout=300s
 
       - name: Monitor Rollout
