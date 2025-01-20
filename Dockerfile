@@ -16,7 +16,7 @@ COPY ./poetry.lock /app/poetry.lock
 
 COPY ./README.md /app/README.md
 
-RUN poetry install
+RUN poetry install --no-root
 
 COPY . /app
 
