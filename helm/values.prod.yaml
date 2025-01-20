@@ -1,49 +1,15 @@
 replicaCount: 1
 
 image:
-  repository: cranecloud/database-api
+  repository: gcr.io/crane-cloud-274413/database-api
   pullPolicy: Always
   tag: ${{ DOCKER_IMAGE_TAG }}
 
-imagePullSecrets: []
-
 nameOverride: "database-api"
-
-serviceAccount:
-  create: false
-  annotations: {}
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 service:
   type: NodePort
   port: 80
-
-resources: {}
-  # limits:
-  #   cpu: 512m
-  #   memory: 512Mi
-  # requests:
-  #   cpu: 512m
-  #   memory: 512Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
 
 nginxConf:
   server {
@@ -53,6 +19,7 @@ nginxConf:
             proxy_pass http://localhost:8000/;
         }
     }
+
 port: 8000
 
 environment:
@@ -71,7 +38,6 @@ environment:
   MAIL_PASSWORD: ${{ MAIL_PASSWORD }}
   MAIL_USERNAME: no-reply@cranecloud.io
 
-  
 
 celery:
   create: true
