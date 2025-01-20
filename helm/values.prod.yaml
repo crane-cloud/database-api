@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: gcr.io/crane-cloud-274413/database-api
+  pullPolicy: Always
+  tag: ${{ DOCKER_IMAGE_TAG }}
+
+nameOverride: "database-api"
+
+service:
+  type: NodePort
+  port: 80
+
+nginxConf:
+  server {
+        listen 80;
+
+        location / {
+            proxy_pass http://localhost:8000/;
+        }
+    }
+
+port: 8000
+
+environment:
+  FASTAPI_ENV: production
+  DATABASE_URI: ${{ DATABASE_URI }}
+  JWT_SALT: ${{ JWT_SALT }}
+  ACTIVITY_LOGGER_URL: ${{ ACTIVITY_LOGGER_URL }}
+  ADMIN_MYSQL_USER: ${{ ADMIN_MYSQL_USER }}
+  ADMIN_MYSQL_PASSWORD: ${{ ADMIN_MYSQL_PASSWORD }}
+  ADMIN_MYSQL_HOST: ${{ ADMIN_MYSQL_HOST }}
+  ADMIN_MYSQL_PORT: ${{ ADMIN_MYSQL_PORT }}
+  ADMIN_PSQL_USER: ${{ ADMIN_PSQL_USER }}
+  ADMIN_PSQL_PASSWORD: ${{ ADMIN_PSQL_PASSWORD }}
+  ADMIN_PSQL_HOST: ${{ ADMIN_PSQL_HOST }}
+  ADMIN_PSQL_PORT: ${{ ADMIN_PSQL_PORT }}
+  MAIL_PASSWORD: ${{ MAIL_PASSWORD }}
+  MAIL_USERNAME: no-reply@cranecloud.io
+
+
+celery:
+  create: true
+  command: 
+    - "poetry"
+    - "run"
+    - "celery"
+    - "-A"
+    - "main.celery"
+    - "worker"
+    - "--loglevel=info"
+  port: 5001
