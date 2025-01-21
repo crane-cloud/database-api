@@ -2,11 +2,11 @@
 import mysql.connector as mysql_conn
 import psycopg2
 from psycopg2 import sql
-import os
 import secrets
 import string
 from types import SimpleNamespace
-import settings
+from config import settings
+
 
 def generate_db_credentials():
     punctuation = r"""#%+,-<=>^_"""
@@ -91,10 +91,10 @@ class MysqlDbService(DatabaseService):
     def create_connection(self):
         try:
             super_connection = mysql_conn.connect(
-                host=os.getenv('ADMIN_MYSQL_HOST'),
-                user=os.getenv('ADMIN_MYSQL_USER'),
-                password=os.getenv('ADMIN_MYSQL_PASSWORD'),
-                port=os.getenv('ADMIN_MYSQL_PORT', '')
+                host=settings.ADMIN_MYSQL_HOST,
+                user=settings.ADMIN_MYSQL_USER,
+                password=settings.ADMIN_MYSQL_PASSWORD,
+                port=settings.ADMIN_MYSQL_PORT
             )
             return super_connection
         except self.Error as e:
@@ -104,10 +104,10 @@ class MysqlDbService(DatabaseService):
     def create_db_connection(self, user=None, password=None, db_name=None):
         try:
             user_connection = mysql_conn.connect(
-                host=os.getenv('ADMIN_MYSQL_HOST'),
+                host=settings.ADMIN_MYSQL_HOST,
                 user=user,
                 password=password,
-                port=os.getenv('ADMIN_MYSQL_PORT', ''),
+                port=settings.ADMIN_MYSQL_PORT,
                 database=db_name
             )
             return user_connection
@@ -197,12 +197,12 @@ class MysqlDbService(DatabaseService):
             cursor = connection.cursor()
             cursor.execute(
                 f"""SELECT table_schema "{db_name}",
-                SUM(data_length + index_length) / 1024 / 1024 AS "Size(MB)"
+                SUM(data_length + index_length) / 1024 AS "Size(KB)"
                 FROM information_schema.TABLES
                 GROUP BY table_schema""")
             db_size = '0'
             for db in cursor:
-                db_size = f'{float(db[1])} MB'
+                db_size = f'{float(db[1])} KB'
             return db_size
         except self.Error:
             return 'N/A'
@@ -362,6 +362,43 @@ class MysqlDbService(DatabaseService):
                 cursor.close()
                 connection.close()
 
+    def disable_user_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection()
+            if not connection:
+                return False
+            cursor = connection.cursor()
+
+            cursor.execute(f"REVOKE ALL PRIVILEGES ON {db_name}.* FROM {db_user_name}")
+
+            cursor.execute(f"GRANT SELECT, DELETE ON {db_name}.* TO {db_user_name}")
+
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
+
+    def enable_user_write_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection(db_name=db_name)
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            cursor.execute(f"GRANT ALL PRIVILEGES ON {db_name}.* TO {db_user_name}")
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
 
     # disable user database log in
     def disable_user_log_in(self, db_user_name, db_user_pw):
@@ -371,7 +408,7 @@ class MysqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT LOCK")
-            
+
             return True
         except self.Error:
             return False
@@ -390,7 +427,7 @@ class MysqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} IDENTIFIED BY '{db_user_pw}'ACCOUNT UNLOCK")
-            
+
             return True
         except self.Error:
             return False
@@ -411,10 +448,10 @@ class PostgresqlDbService(DatabaseService):
     def create_connection(self):
         try:
             super_connection = psycopg2.connect(
-                host=os.getenv('ADMIN_PSQL_HOST'),
-                user=os.getenv('ADMIN_PSQL_USER'),
-                password=os.getenv('ADMIN_PSQL_PASSWORD'),
-                port=os.getenv('ADMIN_PSQL_PORT', '')
+                host=settings.ADMIN_PSQL_HOST,
+                user=settings.ADMIN_PSQL_USER,
+                password=settings.ADMIN_PSQL_PASSWORD,
+                port=settings.ADMIN_PSQL_PORT
             )
             super_connection.autocommit = True
             return super_connection
@@ -423,6 +460,7 @@ class PostgresqlDbService(DatabaseService):
             return False
 
     def check_db_connection(self):
+        super_connection = None
         try:
             super_connection = self.create_connection()
             if not super_connection:
@@ -438,10 +476,10 @@ class PostgresqlDbService(DatabaseService):
     def create_db_connection(self, user=None, password=None, db_name=None):
         try:
             user_connection = psycopg2.connect(
-                host=os.getenv('ADMIN_PSQL_HOST'),
+                host=settings.ADMIN_PSQL_HOST,
                 user=user,
                 password=password,
-                port=os.getenv('ADMIN_PSQL_PORT', ''),
+                port=settings.ADMIN_PSQL_PORT,
                 database=db_name
             )
             return user_connection
@@ -679,7 +717,50 @@ class PostgresqlDbService(DatabaseService):
             cursor.close()
             connection.close()
 
+    def disable_user_access(self, db_name, db_user_name):
+        """Grants read and delete access to the specified user, revoking write and update privileges."""
+        try:
+            connection = self.create_connection()
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            cursor.execute(f"REVOKE INSERT, UPDATE ON DATABASE {db_name} FROM {db_user_name}")
+            cursor.execute(
+                f"REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM {db_user_name}")
+            cursor.execute(
+                f"REVOKE USAGE ON SCHEMA public FROM {db_user_name}")
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
+
+    def enable_user_write_access(self, db_name, db_user_name):
+        try:
+            connection = self.create_connection(db_name=db_name)
+            if not connection:
+                return False
+            cursor = connection.cursor()
+            cursor.execute(f"GRANT INSERT, UPDATE ON DATABASE {db_name} TO {db_user_name}")
+            cursor.execute(
+                f"GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {db_user_name}")
+            cursor.execute(f"GRANT USAGE ON SCHEMA public TO {db_user_name}")
+            return True
+        except self.Error as e:
+            print(e)
+            return False
+        finally:
+            if not connection:
+                return False
+            cursor.close()
+            connection.close()
+
     # disable user database log in
+
     def disable_user_log_in(self, db_user_name):
         try:
             connection = self.create_connection()
@@ -687,7 +768,7 @@ class PostgresqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} NOLOGIN")
-            
+
             return True
         except self.Error as e:
             print(e)
@@ -706,7 +787,7 @@ class PostgresqlDbService(DatabaseService):
                 return False
             cursor = connection.cursor()
             cursor.execute(f"ALTER USER {db_user_name} WITH LOGIN")
-            
+
             return True
         except self.Error as e:
             print(e)

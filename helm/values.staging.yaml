@@ -1,0 +1,87 @@
+replicaCount: 1
+
+image:
+  repository: cranecloud/database-api
+  pullPolicy: Always
+  tag: ${{ DOCKER_IMAGE_TAG }}
+
+imagePullSecrets: []
+
+nameOverride: "database-api"
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: NodePort
+  port: 80
+
+resources: {}
+  # limits:
+  #   cpu: 512m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 512m
+  #   memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+nginxConf:
+  server {
+        listen 80;
+
+        location / {
+            proxy_pass http://localhost:8000/;
+        }
+    }
+port: 8000
+
+environment:
+  FASTAPI_ENV: production
+  DATABASE_URI: ${{ DATABASE_URI }}
+  REDIS_URL: redis://redis:6379
+  JWT_SALT: ${{ JWT_SALT }}
+  ACTIVITY_LOGGER_URL: ${{ ACTIVITY_LOGGER_URL }}
+  ADMIN_MYSQL_USER: ${{ ADMIN_MYSQL_USER }}
+  ADMIN_MYSQL_PASSWORD: ${{ ADMIN_MYSQL_PASSWORD }}
+  ADMIN_MYSQL_HOST: ${{ ADMIN_MYSQL_HOST }}
+  ADMIN_MYSQL_PORT: ${{ ADMIN_MYSQL_PORT }}
+  ADMIN_PSQL_USER: ${{ ADMIN_PSQL_USER }}
+  ADMIN_PSQL_PASSWORD: ${{ ADMIN_PSQL_PASSWORD }}
+  ADMIN_PSQL_HOST: ${{ ADMIN_PSQL_HOST }}
+  ADMIN_PSQL_PORT: ${{ ADMIN_PSQL_PORT }}
+  MAIL_PASSWORD: ${{ MAIL_PASSWORD }}
+  MAIL_USERNAME: no-reply@cranecloud.io
+
+  
+
+celery:
+  create: true
+  command: 
+    - "poetry"
+    - "run"
+    - "celery"
+    - "-A"
+    - "main.celery"
+    - "worker"
+    - "--loglevel=info"
+  port: 5001

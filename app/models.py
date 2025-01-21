@@ -1,13 +1,9 @@
 import datetime
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import text as sa_text
-import bcrypt
-from sqlalchemy.ext.declarative import declarative_base
+from app.database import Base
 
-
-Base = declarative_base()
 
 class Database(Base):
     __tablename__ = 'user_databases'
@@ -19,11 +15,14 @@ class Database(Base):
     user = Column(String, nullable=False)
     password = Column(String, nullable=False)
     owner_id = Column(UUID(as_uuid=True), index=True)
+    project_id = Column(UUID(as_uuid=True), index=True)
     date_created = Column(DateTime, default=datetime.datetime.now)
     port = Column(Integer, nullable=True)
     database_flavour_name = Column(String)
     deleted = Column(Boolean, default=False)
     disabled = Column(Boolean, default=False)
     admin_disabled = Column(Boolean, default=False)
-    default_storage = Column(Integer, nullable=True)
-    allocated_size = Column(Integer, nullable=True)
+    email = Column(String, nullable=True)
+    notified = Column(Boolean, default=False)
+    default_storage_kb = Column(BigInteger, nullable=True,)
+    allocated_size_kb = Column(BigInteger, nullable=True, default=1048576)

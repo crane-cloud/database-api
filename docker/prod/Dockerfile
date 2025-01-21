@@ -20,4 +20,4 @@ EXPOSE 8000
 
 #Exposing port for celery flower
 # EXPOSE 5555
-ENTRYPOINT ["sh", "/app/scripts/start.sh"]
+ENTRYPOINT ["sh", "/app/scripts/start-prod.sh"]
