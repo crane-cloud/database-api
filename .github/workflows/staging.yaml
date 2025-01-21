@@ -83,11 +83,25 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - uses: azure/k8s-set-context@v1
+      - name: Login (GCP)
+        uses: google-github-actions/auth@v2
         with:
-          kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
+          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+
+      - name: Install (Gcloud)
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: crane-cloud-274413
+          install_components: "gke-gcloud-auth-plugin"
+
+      - name: Login (Kubernetes Cluster)
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: staging-cluster
+          location: us-central1-a
+          project_id: crane-cloud-274413
 
       - name: Add Repo (cranecloud)
         run: |
