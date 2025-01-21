@@ -10,7 +10,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile
     container_name: database-api
     environment:
       PYTHONDONTWRITEBYTECODE: 1

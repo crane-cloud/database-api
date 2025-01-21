@@ -18,5 +18,6 @@ RUN poetry install
 
 EXPOSE 8000
 
-ENTRYPOINT ["sh", "/app/scripts/start.sh"]
-
+#Exposing port for celery flower
+# EXPOSE 5555
+ENTRYPOINT ["sh", "/app/scripts/start-prod.sh"]

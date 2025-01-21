@@ -61,7 +61,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
-          file: Dockerfile
+          file: docker/prod/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -136,7 +136,7 @@ jobs:
           --set environment.ADMIN_PSQL_PASSWORD="${{ secrets.PRODUCTION_ADMIN_PSQL_PASSWORD }}" \
           --set environment.ADMIN_PSQL_HOST="${{ secrets.PRODUCTION_ADMIN_PSQL_HOST }}" \
           --set environment.ADMIN_PSQL_PORT="${{ secrets.PRODUCTION_ADMIN_PSQL_PORT }}" \
-          --set environment.MAIL_PASSWORD="${{ secrets.PRODUCTION_MAIL_PASSWORD }}" \
+          --set environment.MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
           --timeout=300s
 
       - name: Monitor Rollout

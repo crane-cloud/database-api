@@ -58,6 +58,7 @@ port: 8000
 environment:
   FASTAPI_ENV: production
   DATABASE_URI: ${{ DATABASE_URI }}
+  REDIS_URL: redis://redis:6379
   JWT_SALT: ${{ JWT_SALT }}
   ACTIVITY_LOGGER_URL: ${{ ACTIVITY_LOGGER_URL }}
   ADMIN_MYSQL_USER: ${{ ADMIN_MYSQL_USER }}
