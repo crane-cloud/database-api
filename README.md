@@ -1,7 +1,7 @@
 # Database API
 [![Coverage Status](https://coveralls.io/repos/github/crane-cloud/database-api/badge.svg?branch=develop)](https://coveralls.io/github/crane-cloud/database-api?branch=develop)
-[![Prod](https://github.com/crane-cloud/database-api/actions/workflows/prod.yml/badge.svg?branch=develop)](https://github.com/crane-cloud/database-api/actions/workflows/prod.yml)
-[![staging](https://github.com/crane-cloud/database-api/actions/workflows/staging.yaml/badge.svg?branch=develop&event=deployment_status)](https://github.com/crane-cloud/database-api/actions/workflows/staging.yaml)
+[![Prod](https://github.com/crane-cloud/database-api/actions/workflows/prod.yml/badge.svg)](https://github.com/crane-cloud/database-api/actions/workflows/prod.yml)
+[![staging](https://github.com/crane-cloud/database-api/actions/workflows/staging.yaml/badge.svg)](https://github.com/crane-cloud/database-api/actions/workflows/staging.yaml)
 
 The database API offers a convenient and efficient way to create MySQL and PostgreSQL databases for users on the Crane Cloud platform
 
