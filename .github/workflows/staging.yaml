@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - develop
+      - ch-add-releases-workflow
 
   workflow_dispatch:
 
@@ -77,7 +78,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      namespace: cranecloud-microservice
+      namespace: cranecloud
       image: cranecloud/database-api
 
     steps:
@@ -88,10 +89,14 @@ jobs:
         with:
           kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
 
+      - name: Add Repo (cranecloud)
+        run: |
+          helm repo add cranecloud https://crane-cloud.github.io/helm-charts/
+
       - name: Helm Release
         run: |
           helm upgrade --install \
-          database-api ./helm/chart \
+          database-api cranecloud/cranecloud \
           --values helm/values.staging.yaml \
           --namespace $namespace \
           --set image.tag="${{ needs.build.outputs.tag }}" \
