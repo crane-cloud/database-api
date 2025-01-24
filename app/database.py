@@ -14,7 +14,8 @@ if not database_exists(DATABASE_URI):
     create_database(DATABASE_URI)
 
 
-engine = create_engine(DATABASE_URI, pool_pre_ping=True)
+engine = create_engine(DATABASE_URI, pool_pre_ping=True,
+                       pool_size=10, max_overflow=20)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
