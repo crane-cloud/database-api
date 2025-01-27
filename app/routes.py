@@ -46,28 +46,56 @@ def fetch_database_stats(access_token: str = Depends(security), db: Session = De
 
 @router.get("/databases")
 def get_all_databases(
-        access_token: str = Depends(security),
-        db: Session = Depends(get_db),
-        project_id: str = Query(None, description="Project ID"),
-        database_flavour_name: str = Query(None, description="Database flavour name")
-    ):
+    access_token: str = Depends(security),
+    db: Session = Depends(get_db),
+    project_id: str = Query(None, description="Project ID"),
+    database_flavour_name: str = Query(
+        None, description="Database flavour name"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    per_page: int = Query(default=10, ge=1, le=100,
+                          description="Items per page")
+):
     current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
-    databases = db.query(Database)
+    query = db.query(Database)
 
     if current_user.role != "administrator":
-        databases = databases.filter(
+        query = query.filter(
             Database.owner_id == current_user.id)
-        
+
     if project_id:
-        databases = databases.filter(Database.project_id == project_id)
+        query = query.filter(Database.project_id == project_id)
 
     if database_flavour_name:
-        databases = databases.filter(
+        query = query.filter(
             Database.database_flavour_name == database_flavour_name)
 
-    return {"status_code": 200, "data": {"databases": databases.all()}}
+    total_count = query.count()
+    total_pages = (total_count + per_page - 1)
+
+    offset = (page - 1) * per_page
+    paginated_query = query.offset(offset).limit(per_page)
+
+    databases = paginated_query.all()
+
+    next_num = page + 1 if page < total_pages else None
+    prev_num = page - 1 if page > 1 else None
+
+    return {
+        "status_code": 200,
+        "data": {
+            "pagination": {
+                "total": total_count,
+                "pages": total_pages,
+                "page": page,
+                "per_page": per_page,
+                "next": next_num,
+                "prev": prev_num
+            },
+            "databases": databases
+        }
+    }
 
 
 @router.post("/databases")
