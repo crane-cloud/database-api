@@ -72,7 +72,7 @@ def get_all_databases(
             Database.database_flavour_name == database_flavour_name)
 
     total_count = query.count()
-    total_pages = (total_count + per_page - 1)
+    total_pages = (total_count + per_page - 1) // per_page
 
     offset = (page - 1) * per_page
     paginated_query = query.offset(offset).limit(per_page)
