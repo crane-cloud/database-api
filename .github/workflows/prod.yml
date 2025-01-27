@@ -7,7 +7,6 @@ on:
       - released
       - prereleased
 
-
 jobs:
   build:
     outputs:
