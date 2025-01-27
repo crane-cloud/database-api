@@ -58,7 +58,7 @@ def get_all_databases(
     current_user = get_current_user(access_token.credentials)
     check_authentication(current_user)
 
-    query = db.query(Database)
+    query = db.query(Database).order_by(Database.date_created.desc())
 
     if current_user.role != "administrator":
         query = query.filter(
