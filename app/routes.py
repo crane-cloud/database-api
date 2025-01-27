@@ -181,69 +181,7 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
     return SimpleNamespace(status_code=201, data={"database": database})
 
 
-@router.get("/databases/{database_id}")
-def single_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token.credentials)
-    check_authentication(current_user)
 
-    user_database = db.query(Database).filter(
-        Database.id == database_id).first()
-    if not user_database:
-        raise HTTPException(status_code=404, detail="Database not found")
-
-    flavour_name = user_database.database_flavour_name
-    if not flavour_name:
-        flavour_name = "mysql"
-
-    db_flavour = get_db_flavour(flavour_name)
-
-    if not db_flavour:
-        return dict(
-            status_code=404,
-            message=f"""Database flavour with name
-                {user_database.database_flavour_name} is not mysql or postgres."""
-        )
-
-    database_service = db_flavour['class']
-
-    # Get db status
-    try:
-        database_connection = database_service.create_db_connection(
-            user=user_database.user, password=user_database.password, db_name=user_database.name)
-        if not database_connection:
-            db_status = False
-        else:
-            db_status = True
-    except:
-        db_status = False
-    finally:
-        if database_connection:
-            if database_service == MysqlDbService():
-                if database_connection.is_connected():
-                    database_connection.close()
-                else:
-                    database_connection.close()
-
-    database_dict = {
-        **user_database.__dict__,
-        "db_status": db_status,
-        "default_storage_kb": database_service.get_database_size(
-            user=user_database.user, password=user_database.password, db_name=user_database.name)
-    }
-
-    return SimpleNamespace(status_code=200, data={"database": database_dict})
-
-
-@router.get("/databases/{database_id}/password")
-def get_database_password(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
-    current_user = get_current_user(access_token.credentials)
-    check_authentication(current_user)
-
-    db_exists = db.query(Database).filter(Database.id == database_id).first()
-    if not db_exists:
-        raise HTTPException(
-            status_code=404, detail=f"Database with ID {database_id} not found")
-    return SimpleNamespace(status_code=200, data={"database": {"password": db_exists.password}})
 
 
 @router.post("/databases/{database_id}/enable")
@@ -681,6 +619,72 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
         db_user, func.count(db_user)).group_by(db_user).distinct().count()
 
     return {"status_code": 200,  'data': {'metadata': metadata, 'graph_data': db_info}}
+
+
+
+@router.get("/databases/{database_id}")
+def single_database(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
+    check_authentication(current_user)
+
+    user_database = db.query(Database).filter(
+        Database.id == database_id).first()
+    if not user_database:
+        raise HTTPException(status_code=404, detail="Database not found")
+
+    flavour_name = user_database.database_flavour_name
+    if not flavour_name:
+        flavour_name = "mysql"
+
+    db_flavour = get_db_flavour(flavour_name)
+
+    if not db_flavour:
+        return dict(
+            status_code=404,
+            message=f"""Database flavour with name
+                {user_database.database_flavour_name} is not mysql or postgres."""
+        )
+
+    database_service = db_flavour['class']
+
+    # Get db status
+    try:
+        database_connection = database_service.create_db_connection(
+            user=user_database.user, password=user_database.password, db_name=user_database.name)
+        if not database_connection:
+            db_status = False
+        else:
+            db_status = True
+    except:
+        db_status = False
+    finally:
+        if database_connection:
+            if database_service == MysqlDbService():
+                if database_connection.is_connected():
+                    database_connection.close()
+                else:
+                    database_connection.close()
+
+    database_dict = {
+        **user_database.__dict__,
+        "db_status": db_status,
+        "default_storage_kb": database_service.get_database_size(
+            user=user_database.user, password=user_database.password, db_name=user_database.name)
+    }
+
+    return SimpleNamespace(status_code=200, data={"database": database_dict})
+
+
+@router.get("/databases/{database_id}/password")
+def get_database_password(database_id: str, access_token: str = Depends(security), db: Session = Depends(get_db)):
+    current_user = get_current_user(access_token.credentials)
+    check_authentication(current_user)
+
+    db_exists = db.query(Database).filter(Database.id == database_id).first()
+    if not db_exists:
+        raise HTTPException(
+            status_code=404, detail=f"Database with ID {database_id} not found")
+    return SimpleNamespace(status_code=200, data={"database": {"password": db_exists.password}})
 
 
 @router.post("/databases/{database_id}/revoke_write_access")
