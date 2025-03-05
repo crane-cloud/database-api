@@ -29,8 +29,10 @@ def fetch_database_stats(access_token: str = Depends(security), db: Session = De
     total = 0
 
     for flavour in database_flavours:
-        databases = db.query(Database).filter_by(
-            database_flavour_name=flavour['name']).all()
+        databases = db.query(Database).filter(
+            Database.database_flavour_name == flavour['name'],
+            Database.deleted == False
+        ).all()
 
         database_count = len(databases)
         dbs_per_flavour[f"{flavour['name']}_db_count"] = database_count
@@ -70,6 +72,9 @@ def get_all_databases(
     if database_flavour_name:
         query = query.filter(
             Database.database_flavour_name == database_flavour_name)
+
+    # ensure at this point that deleted databases are not part of the query for the above filters
+    query = query.filter(Database.deleted == False)
 
     total_count = query.count()
     total_pages = (total_count + per_page - 1) // per_page
@@ -179,9 +184,6 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
     send_async_log_message(log_data)
 
     return SimpleNamespace(status_code=201, data={"database": database})
-
-
-
 
 
 @router.post("/databases/{database_id}/enable")
@@ -619,7 +621,6 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
         db_user, func.count(db_user)).group_by(db_user).distinct().count()
 
     return {"status_code": 200,  'data': {'metadata': metadata, 'graph_data': db_info}}
-
 
 
 @router.get("/databases/{database_id}")
