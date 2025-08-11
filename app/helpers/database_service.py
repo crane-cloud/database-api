@@ -391,6 +391,7 @@ class MysqlDbService(DatabaseService):
             
             cursor = connection.cursor()
             cursor.execute(f"DROP DATABASE `{sanitized['db_name']}`")
+            # TODO: Need to delete users too
             connection.commit()
             return True
         except (self.Error, ValueError) as e:
