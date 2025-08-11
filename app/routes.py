@@ -520,7 +520,8 @@ def allocate_storage(database_id: str, additional_storage: int, access_token: st
 
     if not database_connection:
         return failed_database_connection(current_user, "ADD STORAGE")
-
+    
+    # TODO: Implement the logic to allocate additional storage
     database.allocated_size_kb += additional_storage
     save_to_database(db)
     return {"message": f"Additional {additional_storage} bytes of storage allocated to the database", "status_code": 200}
