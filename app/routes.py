@@ -118,8 +118,17 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
             "operation": "Create",
             "status": "Failed",
             "user_id": current_user.id,
+            "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": "Database with this name already exists"
+            "description": "Database with this name already exists",
+            "a_user_id": None,
+            "a_db_id": None,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         raise HTTPException(
@@ -160,8 +169,16 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
             "status": "Failed",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": "Failed to create database"
+            "description": "Failed to create database",
+            "a_user_id": None,
+            "a_db_id": None,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return dict(
@@ -178,8 +195,16 @@ def create_database(database: DatabaseFlavor, access_token: str = Depends(securi
         "status": "Success",
         "user_id": current_user.id,
         "user_email": current_user.email,
+        "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+        "creation_date": datetime.utcnow().isoformat(),
         "model": "Database",
-        "description": "Database successfully created."
+        "description": "Database successfully created.",
+        "a_user_id": None,
+        "a_db_id": database.id,
+        "a_app_id": None,
+        "a_project_id": database.project_id,
+        "a_cluster_id": None,
+        "a_tag_ids": None
     }
     send_async_log_message(log_data)
 
@@ -207,8 +232,16 @@ def enable_database(database_id: str, access_token: str = Depends(security), db:
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"Database: {database.id} is {enabled_database.message}."
+                "description": f"Database: {database.id} is {enabled_database.message}.",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return dict(status_code=status_code, message=enabled_database.message)
@@ -217,8 +250,16 @@ def enable_database(database_id: str, access_token: str = Depends(security), db:
             "status": "Success",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Database: {database.id} is successfully enabled."
+            "description": f"Database: {database.id} is successfully enabled.",
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return {"status_code": 200, "message": "Database enabled successfully"}
@@ -233,8 +274,16 @@ def enable_database(database_id: str, access_token: str = Depends(security), db:
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"You are not authorised to enable Database: {database.id}"
+                "description": f"You are not authorised to enable Database: {database.id}",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return {"message": f"You are not authorised to enable Database with id {database_id}, please contact an admin", "status_code": 403}
@@ -247,8 +296,16 @@ def enable_database(database_id: str, access_token: str = Depends(security), db:
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"Database: {database.id} is {enabled_database.message}."
+                "description": f"Database: {database.id} is {enabled_database.message}.",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return dict(status_code=status_code, message=enabled_database.message)
@@ -258,8 +315,16 @@ def enable_database(database_id: str, access_token: str = Depends(security), db:
             "status": "Success",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Database: {database.id} is successfully enabled."
+            "description": f"Database: {database.id} is successfully enabled.",
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return {"status_code": 200, "message": "Database enabled successfully"}
@@ -285,12 +350,20 @@ def disable_database(database_id: str, access_token: str = Depends(security), db
         if type(disbled_database) == SimpleNamespace:
             status_code = disbled_database.status_code if disbled_database.status_code else 500
             log_data = {
-                "operation": "DATABASE ENABLE",
+                "operation": "DATABASE DISABLE",
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"Database: {database.id} is {disbled_database.message}."
+                "description": f"Database: {database.id} is {disbled_database.message}.",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return dict(status_code=status_code, message=disbled_database.message)
@@ -299,8 +372,16 @@ def disable_database(database_id: str, access_token: str = Depends(security), db
             "status": "Success",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Database: {database.id} is successfully disabled."
+            "description": f"Database: {database.id} is successfully disabled.",
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return {"message": "Database disabled successfully", "status_code": 200}
@@ -315,8 +396,16 @@ def disable_database(database_id: str, access_token: str = Depends(security), db
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"You are not authorised to disable Database: {database_id}"
+                "description": f"You are not authorised to disable Database: {database_id}",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return {"message": 'Database with id {database_id} is disabled, please contact an admin', "status_code": 403}
@@ -325,12 +414,20 @@ def disable_database(database_id: str, access_token: str = Depends(security), db
         if type(disbled_database) == SimpleNamespace:
             status_code = disbled_database.status_code if disbled_database.status_code else 500
             log_data = {
-                "operation": "DATABASE ENABLE",
+                "operation": "DATABASE DISABLE",
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": f"Database: {database_id} is {disbled_database.message}."
+                "description": f"Database: {database_id} is {disbled_database.message}.",
+                "a_user_id": None,
+                "a_db_id": database.id,
+                "a_app_id": None,
+                "a_project_id": database.project_id,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return dict(status_code=status_code, message=disbled_database.message)
@@ -339,8 +436,16 @@ def disable_database(database_id: str, access_token: str = Depends(security), db
             "status": "Success",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Database: {database_id} is successfully disabled."
+            "description": f"Database: {database_id} is successfully disabled.",
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return {"status_code": 200, "message": "Database disabled successfully"}
@@ -354,10 +459,20 @@ def delete_database(database_id: str, access_token: str = Depends(security), db:
     database = db.query(Database).filter(Database.id == database_id).first()
     if database is None:
         log_data = {
-            "operation": "DATABASE DELETE",
+             "operation": "DATABASE DELETE",
             "status": "Failed",
             "user_id": current_user.id,
-            "description": f"Failed to get Database with ID: {database_id}"
+            "user_email": current_user.email,
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
+            "model": "Database",
+            "description": f"Failed to get Database with ID: {database_id}",
+            "a_user_id": None,
+            "a_db_id": database_id,
+            "a_app_id": None,
+            "a_project_id": None,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return {"status_code": 404, "message": "Database Not Found"}
@@ -368,7 +483,18 @@ def delete_database(database_id: str, access_token: str = Depends(security), db:
         "operation": "DATABASE DELETE",
         "status": "Success",
         "user_id": current_user.id,
-        "description": f"Database: {database.id} is successfully deleted."
+        "user_email": current_user.email,
+        "description": f"Database: {database.id} is successfully deleted.",
+        "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+        "creation_date": datetime.utcnow().isoformat(),
+        "model": "Database",
+        "description": f"Database: {database.id} is successfully deleted.",
+        "a_user_id": None,
+        "a_db_id": database.id,
+        "a_app_id": None,
+        "a_project_id": database.project_id,
+        "a_cluster_id": None,
+        "a_tag_ids": None
     }
     send_async_log_message(log_data)
     return {"status_code": 200, "message": "Database deleted successfully"}
@@ -407,12 +533,20 @@ def reset_database(database_id: str, access_token: str = Depends(security), db: 
 
     if not reset_database:
         log_data = {
-            "operation": "RESET",
+            "operation": "DATABASE RESET",
             "status": "Failed",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "description": f"Failed to reset database: {database.id}",
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Failed to reset database: {database.id}"
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return dict(
@@ -425,8 +559,16 @@ def reset_database(database_id: str, access_token: str = Depends(security), db: 
         "status": "Success",
         "user_id": current_user.id,
         "user_email": current_user.email,
+        "description": f"Database: {database.id} is successfully reset.",
+        "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+        "creation_date": datetime.utcnow().isoformat(),
         "model": "Database",
-        "description": f"Database: {database.id} is successfully reset."
+        "a_user_id": None,
+        "a_db_id": database.id,
+        "a_app_id": None,
+        "a_project_id": database.project_id,
+        "a_cluster_id": None,
+        "a_tag_ids": None
     }
     send_async_log_message(log_data)
     return ({"status_code": 200, "message": "Database Reset Successfully"})
@@ -445,12 +587,20 @@ def password_reset_database(database_id: str, field_update: PasswordUpdate, acce
 
     if not db_flavour:
         log_data = {
-            "operation": "RESET PASSWORD",
+            "operation": "DATABASE PASSWORD RESET",
             "status": "Failed",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "description": "Wrong database flavour name",
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": "Wrong database flavour name"
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return dict(
@@ -473,12 +623,20 @@ def password_reset_database(database_id: str, field_update: PasswordUpdate, acce
 
     if not password_reset_database:
         log_data = {
-            "operation": "RESET PASSWORD",
+            "operation": "DATABASE PASSWORD RESET",
             "status": "Failed",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "description": f"Failed to reset database password for: {database.id}",
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Failed to reset database passsword for: {database.id}"
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return dict(
@@ -494,8 +652,16 @@ def password_reset_database(database_id: str, field_update: PasswordUpdate, acce
         "status": "Success",
         "user_id": current_user.id,
         "user_email": current_user.email,
+        "description": f"Database: {database.id} password is successfully reset.",
+        "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+        "creation_date": datetime.utcnow().isoformat(),
         "model": "Database",
-        "description": f"Database: {database.id} password is successfully reset."
+        "a_user_id": None,
+        "a_db_id": database.id,
+        "a_app_id": None,
+        "a_project_id": database.project_id,
+        "a_cluster_id": None,
+        "a_tag_ids": None
     }
     send_async_log_message(log_data)
     return ({"status_code": 200, "message": "Database Password Reset Successfully"})
@@ -511,6 +677,23 @@ def allocate_storage(database_id: str, additional_storage: int, access_token: st
         database_not_found(current_user, "Enable", database.id)
     db_flavour = get_db_flavour(database.database_flavour_name)
     if not db_flavour:
+        log_data = {
+            "operation": "DATABASE STORAGE ALLOCATION",
+            "status": "Failed",
+            "user_id": current_user.id,
+            "user_email": current_user.email,
+            "description": "Database flavor not found",
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
+            "model": "Database",
+            "a_user_id": None,
+            "a_db_id": database.id,
+            "a_app_id": None,
+            "a_project_id": database.project_id,
+            "a_cluster_id": None,
+            "a_tag_ids": None
+        }
+        send_async_log_message(log_data)
         raise HTTPException(
             status_code=404, detail="Database flavor not found")
 
@@ -524,6 +707,23 @@ def allocate_storage(database_id: str, additional_storage: int, access_token: st
     # TODO: Implement the logic to allocate additional storage
     database.allocated_size_kb += additional_storage
     save_to_database(db)
+    log_data = {
+        "operation": "DATABASE STORAGE ALLOCATION",
+        "status": "Success",
+        "user_id": current_user.id,
+        "user_email": current_user.email,
+        "description": f"Database: {database.id} storage allocated successfully with {additional_storage} bytes.",
+        "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+        "creation_date": datetime.utcnow().isoformat(),
+        "model": "Database",
+        "a_user_id": None,
+        "a_db_id": database.id,
+        "a_app_id": None,
+        "a_project_id": database.project_id,
+        "a_cluster_id": None,
+        "a_tag_ids": None
+    }
+    send_async_log_message(log_data)
     return {"message": f"Additional {additional_storage} bytes of storage allocated to the database", "status_code": 200}
 
 
@@ -548,12 +748,20 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
             graph_filter_data['set_by'] = set_by
     except ValueError as e:
         log_data = {
-            "operation": "Graph data",
+            "operation": "DATABASE GRAPH DATA",
             "status": "Failed",
             "user_id": current_user.id,
             "user_email": current_user.email,
+            "description": f"Failed due to: {e}",
+            "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+            "creation_date": datetime.utcnow().isoformat(),
             "model": "Database",
-            "description": f"Failed due to: {e}"
+            "a_user_id": None,
+            "a_db_id": None,
+            "a_app_id": None,
+            "a_project_id": None,
+            "a_cluster_id": None,
+            "a_tag_ids": None
         }
         send_async_log_message(log_data)
         return JSONResponse(data={'message': str(e)}, status_code=400)
@@ -564,12 +772,20 @@ def database_graph_data(start: Optional[str] = Query(description="Start date for
         valid_flavour = get_db_flavour(db_flavour)
         if not valid_flavour:
             log_data = {
-                "operation": "Graph Data",
+                "operation": "DATABASE GRAPH DATA",
                 "status": "Failed",
                 "user_id": current_user.id,
                 "user_email": current_user.email,
+                "description": "Wrong database flavour name",
+                "user_name": getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None),
+                "creation_date": datetime.utcnow().isoformat(),
                 "model": "Database",
-                "description": "Wrong database flavour name"
+                "a_user_id": None,
+                "a_db_id": None,
+                "a_app_id": None,
+                "a_project_id": None,
+                "a_cluster_id": None,
+                "a_tag_ids": None
             }
             send_async_log_message(log_data)
             return JSONResponse(data={'message': 'Not a valid database flavour use mysql or postgres'}, status_code=401)
