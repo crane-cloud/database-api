@@ -6,10 +6,6 @@ on:
     types:
       - released
       - prereleased
-  #TODO: Remove this once the branch is merged
-  push:
-    branches:
-      - ch-update-host-server
 
 jobs:
   build:
@@ -25,8 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # ref: master # reference branch
-          ref: ch-update-host-server
+          ref: master # reference branch
 
       - name: Install (Buildx)
         uses: docker/setup-buildx-action@v3
