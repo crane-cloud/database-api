@@ -25,7 +25,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master # reference branch
+          # ref: master # reference branch
+          ref: ch-update-host-server
 
       - name: Install (Buildx)
         uses: docker/setup-buildx-action@v3
@@ -44,8 +45,10 @@ jobs:
             latest=true
           images: ${{ env.image }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
             type=sha,prefix=prod-
 
       - name: Build
@@ -65,9 +68,19 @@ jobs:
         with:
           script: |
             const metadata = JSON.parse(`${{ steps.meta.outputs.json }}`)
-            const fullUrl = metadata.tags.find((t) => t.includes(':prod-sha-'))
+            const isRelease = context.eventName === 'release'
+
+            let fullUrl
+            if (isRelease) {
+              // Pick the full semver tag e.g. 1.16.0
+              fullUrl = metadata.tags.find((t) => /:\d+\.\d+\.\d+$/.test(t))
+            } else {
+              // Pick the sha tag e.g. prod-abc1234
+              fullUrl = metadata.tags.find((t) => t.includes(':prod-'))
+            }
+
             if (fullUrl == null) {
-              core.error('Unable to find sha tag of image')
+              core.error('Unable to find tag of image')
             } else {
               const tag = fullUrl.split(':')[1]
               core.setOutput('image', fullUrl)
