@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - develop
-      - ch-update-host-server
 
   workflow_dispatch:
 
@@ -85,7 +84,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- GCP DEPLOYEMENT ---
+      # --- GCP DEPLOYMENT ---
       # - name: Login (GCP)
       #   uses: google-github-actions/auth@v2
       #   with:
